@@ -1,0 +1,9 @@
+# NAME: ithome
+# AUTHOR: Onloker
+# REPO: https://github.com/Onloker/qx_rule
+# UPDATED: 2024-10-12 10:25:52
+# HOST-SUFFIX: 3
+# TOTAL: 3
+HOST-SUFFIX,ithome.com,ithome
+HOST-SUFFIX,ruanmei.com,ithome
+HOST-SUFFIX,lapin365.com,ithome

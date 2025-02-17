@@ -1,0 +1,12 @@
+# NAME: QQMusic
+# AUTHOR: Onloker
+# REPO: https://github.com/Onloker/qx_rule
+# UPDATED: 2024-10-12 11:32:21
+# HOST-SUFFIX: 6
+# TOTAL: 6
+HOST-SUFFIX,y.qq.com,QQMusic
+HOST-SUFFIX,y.gtimg.cn,QQMusic
+HOST-SUFFIX,tencentmusic.com,QQMusic
+HOST-SUFFIX,aqqmusic.tc.qq.com,QQMusic
+HOST-SUFFIX,qqmusic.qq.com,QQMusic
+HOST-SUFFIX,music.qq.com,QQMusic
