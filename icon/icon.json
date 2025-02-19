@@ -14,5 +14,9 @@
             "name":"OpenAI",
             "url":"https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/openai.png"
         },
+		{
+            "name":"ByteDance",
+            "url":"https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/ByteDance.png"
+        }
     ]
 }
