@@ -24,30 +24,27 @@ const signInUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
 const $ = new Env(scriptName);
 
 // 获取 Authorization 并存储
-if ($request && $request.headers && $request.headers.Authorization) {
+if (typeof $request !== "undefined" && $request.headers && $request.headers.Authorization) {
     const token = $request.headers.Authorization;
     $.setdata(token, tokenKey);
     $.log(`[${scriptName}] 获取并存储 Token: ${token}`);
     $.msg(scriptName, "成功获取 Authorization", token);
+    $.done();
+    return;
 }
 
-// 签到任务
-!(async () => {
-    if (typeof $request !== "undefined") {
-        $.done();
-        return;
-    }
+// 定时签到任务
+if (typeof $request === "undefined") {
     const token = $.getdata(tokenKey);
     if (!token) {
         $.msg(scriptName, "❌ Token 未获取，无法签到", "请先打开 App 获取 Authorization");
         $.done();
         return;
     }
-    await signIn(token);
-    $.done();
-})();
+    signIn(token);
+}
 
-async function signIn(token) {
+function signIn(token) {
     const headers = {
         "Authorization": token,
         "Content-Type": "application/json"
@@ -61,12 +58,33 @@ async function signIn(token) {
     $.post(request, (error, response, data) => {
         if (error) {
             $.msg(scriptName, "❌ 签到请求失败", error);
-            $.log(`签到请求失败: ${error}`);
+            $.log(`签到请求失败: ${JSON.stringify(error)}`);
         } else {
             $.msg(scriptName, "✅ 签到成功", `响应: ${data}`);
             $.log(`签到成功: ${data}`);
         }
+        $.done();
     });
 }
 
-function Env(t){this.name=t,this.data=null,this.dataFile="box.dat",this.logs=[],this.isMute=false,this.isNeedRewrite=false,this.logSeparator="\n",this.encoding="utf-8",this.startTime=(new Date).getTime(),Object.assign(this,Env.prototype)}
+function Env(t) {
+    this.name = t;
+    this.data = null;
+    this.dataFile = "box.dat";
+    this.logs = [];
+    this.isMute = false;
+    this.isNeedRewrite = false;
+    this.logSeparator = "\n";
+    this.encoding = "utf-8";
+    this.startTime = (new Date).getTime();
+    this.setdata = (val, key) => $prefs.setValueForKey(val, key);
+    this.getdata = key => $prefs.valueForKey(key);
+    this.msg = (title, subtitle, body) => $notify(title, subtitle, body);
+    this.log = message => console.log(message);
+    this.post = (options, callback) => {
+        $httpClient.post(options, (error, response, body) => {
+            callback(error, response, body);
+        });
+    };
+    this.done = () => $done();
+}
