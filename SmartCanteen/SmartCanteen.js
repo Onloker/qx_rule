@@ -1,5 +1,5 @@
 /******************************************
- * @name 智慧食堂自动签到脚本
+ * @name 智慧食堂签到
  * @author Onloker
  * @update 20250319
  * @version 1.0.0
@@ -11,11 +11,11 @@
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 
 [rewrite_local]
-# 获取 Authorization Token
+# 获取Token
 ^https://cngm\.cn-np\.com/ script-request-header quantumultx_signin.js
 
 [task_local]
-0 9 * * * quantumultx_signin.js, tag=每日自动签到, enabled=true
+0 9 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, enabled=true
 
 const $task = typeof $task !== "undefined" ? $task : null;
 const $prefs = typeof $prefs !== "undefined" ? $prefs : null;
