@@ -31,7 +31,12 @@ function getAuthToken() {
 	let token = $request.headers.Authorization || "";
     if (token) {
         $prefs.setValueForKey(token, COOKIE_KEY);
-        $notify("Token 获取成功", "", token);
+        let storedToken = $prefs.valueForKey(COOKIE_KEY);
+        if (storedToken) {
+            $notify("Token 获取成功", "", storedToken);
+        } else {
+            $notify("Token 存储失败", "", "请检查 Quantumult X 配置");
+        }
     } else {
         $notify("获取 Token 失败", "", "未能找到 Authorization 头");
     }
@@ -45,7 +50,7 @@ function signIn() {
     let authToken = $prefs.valueForKey(COOKIE_KEY);
     if (!authToken) {
         $notify("签到失败", "未找到 Token", "请先手动获取 Token");
-        return;
+        return $done();
     }
 	
 	let options = {
@@ -60,7 +65,8 @@ function signIn() {
             "Accept-Language": "zh-CN,zh;q=0.9",
             "Connection": "keep-alive",
             "targetTenant": "HK900000"
-        }
+        },
+        body: "{}"
     };
 	
 	$task.fetch(options).then(response => {
@@ -73,11 +79,11 @@ function signIn() {
                 $notify("签到失败", "", json.message || "未知错误");
             }
         } catch (e) {
-            $notify("签到异常", "", "无法解析服务器返回的数据");
+            $notify("签到异常", "", "无法解析服务器返回的数据: " + result);
         }
         return $done();
     }).catch(error => {
-        $notify("签到失败", "", error.message);
+        $notify("签到失败", "", "请求错误: " + error.message);
         return $done();
     });
 }
