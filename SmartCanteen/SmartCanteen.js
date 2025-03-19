@@ -17,80 +17,56 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 [task_local]
 0 9 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, enabled=true
 
-const COOKIE_KEY = "AUTHORIZATION_TOKEN";
+const scriptName = "SmartCanteen";
+const tokenKey = "SmartCanteen_Token";
+const signInUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
 
-/**
- * 获取 Token 逻辑
- */
-function getAuthToken() {
-    if (typeof $request === "undefined" || !$request.headers) {
-        $notify("获取 Token 失败", "", "未能捕获请求，请检查 Quantumult X 配置");
-        return $done({});
-    }
-	
-	let token = $request.headers.Authorization || "";
-    if (token) {
-        $prefs.setValueForKey(token, COOKIE_KEY);
-        let storedToken = $prefs.valueForKey(COOKIE_KEY);
-        if (storedToken) {
-            $notify("Token 获取成功", "", storedToken);
-        } else {
-            $notify("Token 存储失败", "", "请检查 Quantumult X 配置");
-        }
-    } else {
-        $notify("获取 Token 失败", "", "未能找到 Authorization 头");
-    }
-    return $done({});
+const $ = new Env(scriptName);
+
+// 获取 Authorization 并存储
+if ($request && $request.headers && $request.headers.Authorization) {
+    const token = $request.headers.Authorization;
+    $.setdata(token, tokenKey);
+    $.log(`[${scriptName}] 获取并存储 Token: ${token}`);
+    $.msg(scriptName, "成功获取 Authorization", token);
 }
 
-/**
- * 签到逻辑
- */
-function signIn() {
-    let authToken = $prefs.valueForKey(COOKIE_KEY);
-    if (!authToken) {
-        $notify("签到失败", "未找到 Token", "请先手动获取 Token");
-        return $done();
+// 签到任务
+!(async () => {
+    if (typeof $request !== "undefined") {
+        $.done();
+        return;
     }
-	
-	let options = {
-        url: "https://smart-area-api.cn-np.com/shop/SignIn/handle",
-        method: "POST",
-        headers: {
-            "Host": "smart-area-api.cn-np.com",
-            "Authorization": authToken,
-            "Accept": "*/*",
-            "User-Agent": "iosbusiness/3.27.0 (iPhone; iOS 17.1.1; Scale/3.00)",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "zh-CN,zh;q=0.9",
-            "Connection": "keep-alive",
-            "targetTenant": "HK900000"
-        },
-        body: "{}"
+    const token = $.getdata(tokenKey);
+    if (!token) {
+        $.msg(scriptName, "❌ Token 未获取，无法签到", "请先打开 App 获取 Authorization");
+        $.done();
+        return;
+    }
+    await signIn(token);
+    $.done();
+})();
+
+async function signIn(token) {
+    const headers = {
+        "Authorization": token,
+        "Content-Type": "application/json"
     };
-	
-	$task.fetch(options).then(response => {
-        let result = response.body || "";
-        try {
-            let json = JSON.parse(result);
-            if (json.success) {
-                $notify("签到成功", "", "签到已完成");
-            } else {
-                $notify("签到失败", "", json.message || "未知错误");
-            }
-        } catch (e) {
-            $notify("签到异常", "", "无法解析服务器返回的数据: " + result);
+    const request = {
+        url: signInUrl,
+        headers: headers,
+        body: "{}",
+        method: "POST"
+    };
+    $.post(request, (error, response, data) => {
+        if (error) {
+            $.msg(scriptName, "❌ 签到请求失败", error);
+            $.log(`签到请求失败: ${error}`);
+        } else {
+            $.msg(scriptName, "✅ 签到成功", `响应: ${data}`);
+            $.log(`签到成功: ${data}`);
         }
-        return $done();
-    }).catch(error => {
-        $notify("签到失败", "", "请求错误: " + error.message);
-        return $done();
     });
 }
 
-// 判断执行逻辑
-if (typeof $request !== "undefined") {
-    getAuthToken();
-} else {
-    signIn();
-}
+function Env(t){this.name=t,this.data=null,this.dataFile="box.dat",this.logs=[],this.isMute=false,this.isNeedRewrite=false,this.logSeparator="\n",this.encoding="utf-8",this.startTime=(new Date).getTime(),Object.assign(this,Env.prototype)}
