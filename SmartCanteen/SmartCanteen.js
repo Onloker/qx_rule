@@ -17,25 +17,25 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 [task_local]
 0 9 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, enabled=true
 
-const $task = typeof $task !== "undefined" ? $task : null;
-const $prefs = typeof $prefs !== "undefined" ? $prefs : null;
-const $notify = typeof $notify !== "undefined" ? $notify : null;
-
 const COOKIE_KEY = "AUTHORIZATION_TOKEN";
 
 /**
  * 获取 Token 逻辑
  */
 function getAuthToken() {
-    const headers = $request.headers;
-    if (headers && headers.Authorization) {
-        let token = headers.Authorization;
-        console.log("[获取 Token]:", token);
-        $prefs.setValueForKey(token, COOKIE_KEY);
-    } else {
-        console.log("[错误]: 未能获取 Token，请检查请求头");
+    if (typeof $request === "undefined" || !$request.headers) {
+        $notify("获取 Token 失败", "", "未能捕获请求，请检查 Quantumult X 配置");
+        return $done({});
     }
-    $done({});
+	
+	let token = $request.headers.Authorization || "";
+    if (token) {
+        $prefs.setValueForKey(token, COOKIE_KEY);
+        $notify("Token 获取成功", "", token);
+    } else {
+        $notify("获取 Token 失败", "", "未能找到 Authorization 头");
+    }
+    return $done({});
 }
 
 /**
@@ -44,12 +44,12 @@ function getAuthToken() {
 function signIn() {
     let authToken = $prefs.valueForKey(COOKIE_KEY);
     if (!authToken) {
-        console.log("[错误]: 请先获取 Authorization Token 后再尝试签到！");
         $notify("签到失败", "未找到 Token", "请先手动获取 Token");
         return;
     }
-
-    let options = {
+	
+	let options = {
+        method: "POST",
         url: "https://smart-area-api.cn-np.com/shop/SignIn/handle",
         headers: {
             "Host": "smart-area-api.cn-np.com",
@@ -64,16 +64,15 @@ function signIn() {
     };
 	
 	$task.fetch(options).then(response => {
-        console.log("[签到结果]:", response.body);
-        $notify("签到成功", "", "签到已完成");
-        $done();
+        $notify("签到成功", "", response.body);
+        return $done();
     }).catch(error => {
-        console.error("[签到失败]:", error);
         $notify("签到失败", "", error.message);
-        $done();
+        return $done();
     });
 }
 
+// 判断执行逻辑
 if (typeof $request !== "undefined") {
     getAuthToken();
 } else {
