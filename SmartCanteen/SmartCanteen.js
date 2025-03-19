@@ -26,7 +26,7 @@ const COOKIE_KEY = "AUTHORIZATION_TOKEN";
 /**
  * 获取 Token 逻辑
  */
- function getAuthToken() {
+function getAuthToken() {
     const headers = $request.headers;
     if (headers && headers.Authorization) {
         let token = headers.Authorization;
@@ -41,15 +41,15 @@ const COOKIE_KEY = "AUTHORIZATION_TOKEN";
 /**
  * 签到逻辑
  */
-async function signIn() {
+function signIn() {
     let authToken = $prefs.valueForKey(COOKIE_KEY);
     if (!authToken) {
         console.log("[错误]: 请先获取 Authorization Token 后再尝试签到！");
         $notify("签到失败", "未找到 Token", "请先手动获取 Token");
         return;
     }
-	
-	let options = {
+
+    let options = {
         url: "https://smart-area-api.cn-np.com/shop/SignIn/handle",
         headers: {
             "Host": "smart-area-api.cn-np.com",
@@ -66,9 +66,11 @@ async function signIn() {
 	$task.fetch(options).then(response => {
         console.log("[签到结果]:", response.body);
         $notify("签到成功", "", "签到已完成");
+        $done();
     }).catch(error => {
         console.error("[签到失败]:", error);
         $notify("签到失败", "", error.message);
+        $done();
     });
 }
 
