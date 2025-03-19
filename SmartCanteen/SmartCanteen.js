@@ -1,12 +1,3 @@
-/******************************************
- * @name 智慧食堂签到
- * @author Onloker
- * @update 20250319
- * @version 1.0.0
- ******************************************
- * 本脚本用于 Quantumult X 运行，自动签到。
- ******************************************/
-
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 
@@ -24,27 +15,29 @@ const signInUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
 const $ = new Env(scriptName);
 
 // 获取 Authorization 并存储
-if (typeof $request !== "undefined" && $request.headers && $request.headers.Authorization) {
+if ($request && $request.headers && $request.headers.Authorization) {
     const token = $request.headers.Authorization;
-    $.setdata(token, tokenKey);
-    $.log(`[${scriptName}] 获取并存储 Token: ${token}`);
-    $.msg(scriptName, "成功获取 Authorization", token);
+    if (token) {
+        $.setdata(token, tokenKey);
+        $.log(`[${scriptName}] 成功存储 Token: ${token}`);
+        $.msg(scriptName, "✅ 获取 Authorization 成功", token);
+    }
     $.done();
     return;
 }
 
-// 定时签到任务
+// 签到任务
 if (typeof $request === "undefined") {
     const token = $.getdata(tokenKey);
     if (!token) {
-        $.msg(scriptName, "❌ Token 未获取，无法签到", "请先打开 App 获取 Authorization");
+        $.msg(scriptName, "❌ Token 获取失败", "请先打开 App 以存储 Authorization");
         $.done();
         return;
     }
-    signIn(token);
+    doSignIn(token);
 }
 
-function signIn(token) {
+function doSignIn(token) {
     const headers = {
         "Authorization": token,
         "Content-Type": "application/json"
@@ -57,11 +50,11 @@ function signIn(token) {
     };
     $.post(request, (error, response, data) => {
         if (error) {
-            $.msg(scriptName, "❌ 签到请求失败", error);
-            $.log(`签到请求失败: ${JSON.stringify(error)}`);
+            $.msg(scriptName, "❌ 签到请求失败", JSON.stringify(error));
+            $.log(`❌ 签到请求失败: ${JSON.stringify(error)}`);
         } else {
-            $.msg(scriptName, "✅ 签到成功", `响应: ${data}`);
-            $.log(`签到成功: ${data}`);
+            $.msg(scriptName, "✅ 签到成功", `服务器响应: ${data}`);
+            $.log(`✅ 签到成功: ${data}`);
         }
         $.done();
     });
@@ -69,14 +62,10 @@ function signIn(token) {
 
 function Env(t) {
     this.name = t;
-    this.data = null;
-    this.dataFile = "box.dat";
+    this.data = {};
     this.logs = [];
-    this.isMute = false;
-    this.isNeedRewrite = false;
     this.logSeparator = "\n";
-    this.encoding = "utf-8";
-    this.startTime = (new Date).getTime();
+    this.startTime = new Date().getTime();
     this.setdata = (val, key) => $prefs.setValueForKey(val, key);
     this.getdata = key => $prefs.valueForKey(key);
     this.msg = (title, subtitle, body) => $notify(title, subtitle, body);
