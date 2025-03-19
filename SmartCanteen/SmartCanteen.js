@@ -49,8 +49,8 @@ function signIn() {
     }
 	
 	let options = {
-        method: "POST",
         url: "https://smart-area-api.cn-np.com/shop/SignIn/handle",
+        method: "POST",
         headers: {
             "Host": "smart-area-api.cn-np.com",
             "Authorization": authToken,
@@ -64,7 +64,17 @@ function signIn() {
     };
 	
 	$task.fetch(options).then(response => {
-        $notify("签到成功", "", response.body);
+        let result = response.body || "";
+        try {
+            let json = JSON.parse(result);
+            if (json.success) {
+                $notify("签到成功", "", "签到已完成");
+            } else {
+                $notify("签到失败", "", json.message || "未知错误");
+            }
+        } catch (e) {
+            $notify("签到异常", "", "无法解析服务器返回的数据");
+        }
         return $done();
     }).catch(error => {
         $notify("签到失败", "", error.message);
