@@ -1,3 +1,4 @@
+/******************************************
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 
@@ -7,6 +8,7 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 
 [task_local]
 0 9 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, enabled=true
+******************************************/
 
 const scriptName = "SmartCanteen";
 const tokenKey = "SmartCanteen_Token";
