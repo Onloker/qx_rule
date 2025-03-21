@@ -20,7 +20,7 @@ if (typeof $request !== 'undefined') {
     const headers = $request.headers;
     const authHeader = headers["Authorization"] || headers["authorization"];
 
-    if (authHeader) {
+    if (authHeader && authHeader.startsWith("bearer ")) {
         $.setdata(authHeader, TOKEN_KEY);
         $.msg("智慧食堂签到", "Token 捕获成功", authHeader);
     } else {
