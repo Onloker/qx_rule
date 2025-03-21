@@ -1,4 +1,6 @@
 /******************************************
+版本号：1.0.1
+
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 
@@ -14,21 +16,17 @@ const $ = new Env("智慧食堂签到");
 const TOKEN_KEY = "smartcanteen_auth_token";
 const API_2 = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
 
-// 捕获 Authorization 或 token
+// 捕获 Authorization
 if (typeof $request !== 'undefined') {
     try {
         const headers = $request.headers;
         const authHeader = headers["Authorization"] || headers["authorization"];
-        const tokenHeader = headers["token"] || headers["Token"];
 
-        // 优先使用 Authorization，其次使用 token
-        const token = authHeader && authHeader.startsWith("bearer ") ? authHeader : tokenHeader;
-
-        if (token) {
-            $.setdata(token, TOKEN_KEY);
-            $.msg("智慧食堂签到", "Token 捕获成功", token);
+        if (authHeader && authHeader.startsWith("bearer ")) {
+            $.setdata(authHeader, TOKEN_KEY);
+            $.msg("智慧食堂签到", "Token 捕获成功", authHeader);
         } else {
-            throw new Error("未捕获到有效的 Token");
+            throw new Error("未捕获到有效的 Authorization");
         }
     } catch (error) {
         $.msg("智慧食堂签到", "❌ 捕获 Token 失败", error.message);
