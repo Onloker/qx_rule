@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.8
+版本号：1.0.9
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -82,9 +82,17 @@ async function signIn(token) {
                 reject(err);
             } else {
                 try {
-                    $.log(`签到响应状态码: ${resp.statusCode}`);
-                    $.log("签到响应数据: " + data);
-                    resolve(JSON.parse(data));
+                    if (resp && resp.statusCode) {
+                        $.log(`签到响应状态码: ${resp.statusCode}`);
+                    } else {
+                        $.log("未获取到响应状态码。");
+                    }
+                    if (data) {
+                        $.log("签到响应数据: " + data);
+                        resolve(JSON.parse(data));
+                    } else {
+                        throw new Error("响应数据为空");
+                    }
                 } catch (parseErr) {
                     $.logErr("解析响应失败: " + parseErr);
                     reject(parseErr);
