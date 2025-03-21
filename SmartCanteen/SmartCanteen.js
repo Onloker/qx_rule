@@ -12,19 +12,22 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 
 const $ = new Env("智慧食堂签到");
 const TOKEN_KEY = "smartcanteen_auth_token";
-const API_1 = "https://cngm.cn-np.com/";
 const API_2 = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
 
 // 监听请求头，获取Authorization
 if (typeof $request !== 'undefined') {
     const headers = $request.headers;
     const authHeader = headers["Authorization"] || headers["authorization"];
+    const tokenHeader = headers["token"] || headers["Token"];
 
-    if (authHeader && authHeader.startsWith("bearer ")) {
-        $.setdata(authHeader, TOKEN_KEY);
-        $.msg("智慧食堂签到", "Token 捕获成功", authHeader);
+    // 优先使用 Authorization，其次使用 token
+    const token = authHeader && authHeader.startsWith("bearer ") ? authHeader : tokenHeader;
+
+    if (token) {
+        $.setdata(token, TOKEN_KEY);
+        $.msg("智慧食堂签到", "Token 捕获成功", token);
     } else {
-        $.msg("智慧食堂签到", "未捕获到 Token", "请检查请求是否包含 Authorization");
+        $.msg("智慧食堂签到", "未捕获到 Token", "请检查请求是否包含 Authorization 或 token");
     }
     $.done();
 }
@@ -98,6 +101,6 @@ function Env(name) {
         post: (options, callback) => {
             const request = require("request");
             request.post(options, callback);
-        }
+        };
     };
 }
