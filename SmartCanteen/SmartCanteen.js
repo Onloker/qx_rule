@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.7
+版本号：1.0.8
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -69,7 +69,8 @@ async function signIn(token) {
     const options = {
         url: API_2,
         headers: headers,
-        method: "POST"
+        method: "POST",
+        timeout: 10000 // 设置超时时间为 10 秒
     };
 
     $.log("准备发起签到请求...");
@@ -81,6 +82,7 @@ async function signIn(token) {
                 reject(err);
             } else {
                 try {
+                    $.log(`签到响应状态码: ${resp.statusCode}`);
                     $.log("签到响应数据: " + data);
                     resolve(JSON.parse(data));
                 } catch (parseErr) {
