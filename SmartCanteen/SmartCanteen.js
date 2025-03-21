@@ -18,6 +18,7 @@ const API_2 = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
 
 // 捕获 Authorization
 if (typeof $request !== 'undefined') {
+    $.log("捕获 Authorization 开始...");
     try {
         const headers = $request.headers;
         const authHeader = headers["Authorization"] || headers["authorization"];
@@ -36,6 +37,7 @@ if (typeof $request !== 'undefined') {
 
 // 签到主函数
 !(async () => {
+    $.log("签到主函数开始...");
     try {
         const token = $.getdata(TOKEN_KEY);
 
@@ -44,6 +46,7 @@ if (typeof $request !== 'undefined') {
             return;
         }
 
+        $.log(`使用 Token: ${token}`);
         // 请求签到接口
         const response = await signIn(token);
 
@@ -75,12 +78,15 @@ async function signIn(token) {
     return new Promise((resolve, reject) => {
         $.http.post(options, (err, resp, data) => {
             if (err) {
-                reject("签到请求失败: " + err);
+                $.logErr("签到请求失败: " + err);
+                reject(err);
             } else {
                 try {
+                    $.log("签到响应数据: " + data);
                     resolve(JSON.parse(data));
                 } catch (parseErr) {
-                    reject("解析响应失败: " + parseErr);
+                    $.logErr("解析响应失败: " + parseErr);
+                    reject(parseErr);
                 }
             }
         });
