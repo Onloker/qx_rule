@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.6
+版本号：1.0.7
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -71,6 +71,8 @@ async function signIn(token) {
         headers: headers,
         method: "POST"
     };
+
+    $.log("准备发起签到请求...");
 
     return new Promise((resolve, reject) => {
         $.http.post(options, (err, resp, data) => {
