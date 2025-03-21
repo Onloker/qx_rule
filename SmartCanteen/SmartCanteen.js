@@ -10,72 +10,94 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 0 9 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, enabled=true
 ******************************************/
 
-const scriptName = "SmartCanteen";
-const tokenKey = "SmartCanteen_Token";
-const signInUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
+const $ = new Env("智慧食堂签到");
+const TOKEN_KEY = "smartcanteen_auth_token";
+const API_1 = "https://cngm.cn-np.com/";
+const API_2 = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
 
-const $ = new Env(scriptName);
+// 监听请求头，获取Authorization
+if (typeof $request !== 'undefined') {
+    const headers = $request.headers;
+    const authHeader = headers["Authorization"] || headers["authorization"];
 
-// 获取 Authorization 并存储
-if ($request && $request.headers && $request.headers.Authorization) {
-    const token = $request.headers.Authorization;
-    if (token) {
-        $.setdata(token, tokenKey);
-        $.log(`[${scriptName}] 成功存储 Token: ${token}`);
-        $.msg(scriptName, "✅ 获取 Authorization 成功", token);
+    if (authHeader) {
+        $.setdata(authHeader, TOKEN_KEY);
+        $.msg("智慧食堂签到", "Token 捕获成功", authHeader);
+    } else {
+        $.msg("智慧食堂签到", "未捕获到 Token", "请检查请求是否包含 Authorization");
     }
     $.done();
-    return;
 }
 
-// 签到任务
-if (typeof $request === "undefined") {
-    const token = $.getdata(tokenKey);
+// 签到主函数
+!(async () => {
+    const token = $.getdata(TOKEN_KEY);
+
     if (!token) {
-        $.msg(scriptName, "❌ Token 获取失败", "请先打开 App 以存储 Authorization");
+        $.msg("智慧食堂签到", "❌ 未找到有效的 Token", "请先运行 App 以捕获 Token");
         $.done();
         return;
     }
-    doSignIn(token);
-}
 
-function doSignIn(token) {
+    // 请求签到接口
+    const response = await signIn(token);
+
+    if (response) {
+        $.msg("智慧食堂签到", "签到成功", `🎉 签到结果: ${response}`);
+    } else {
+        $.msg("智慧食堂签到", "签到失败", "请检查网络或 Token 是否有效");
+    }
+    $.done();
+})();
+
+// 签到请求
+async function signIn(token) {
     const headers = {
         "Authorization": token,
         "Content-Type": "application/json"
     };
-    const request = {
-        url: signInUrl,
+
+    const options = {
+        url: API_2,
         headers: headers,
-        body: "{}",
         method: "POST"
     };
-    $.post(request, (error, response, data) => {
-        if (error) {
-            $.msg(scriptName, "❌ 签到请求失败", JSON.stringify(error));
-            $.log(`❌ 签到请求失败: ${JSON.stringify(error)}`);
-        } else {
-            $.msg(scriptName, "✅ 签到成功", `服务器响应: ${data}`);
-            $.log(`✅ 签到成功: ${data}`);
-        }
-        $.done();
+
+    try {
+        const response = await httpRequest(options);
+        return response;
+    } catch (error) {
+        $.logErr(error);
+        return null;
+    }
+}
+
+// HTTP 请求封装
+async function httpRequest(options) {
+    return new Promise((resolve, reject) => {
+        $.http.post(options, (err, resp, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data);
+            }
+        });
     });
 }
 
-function Env(t) {
-    this.name = t;
-    this.data = {};
-    this.logs = [];
-    this.logSeparator = "\n";
-    this.startTime = new Date().getTime();
+// 环境类封装
+function Env(name) {
+    this.name = name;
+    this.log = (msg) => console.log(`[${this.name}] ${msg}`);
+    this.logErr = (err) => console.error(`[${this.name}]`, err);
+    this.msg = (title, subtitle, content) => console.log(`\n${title}\n${subtitle || ''}\n${content || ''}`);
+    this.getdata = (key) => $prefs.valueForKey(key);
     this.setdata = (val, key) => $prefs.setValueForKey(val, key);
-    this.getdata = key => $prefs.valueForKey(key);
-    this.msg = (title, subtitle, body) => $notify(title, subtitle, body);
-    this.log = message => console.log(message);
-    this.post = (options, callback) => {
-        $httpClient.post(options, (error, response, body) => {
-            callback(error, response, body);
-        });
-    };
     this.done = () => $done();
+    this.http = {
+        post: (options, callback) => {
+            const request = require("request");
+            request.post(options, callback);
+        }
+    };
 }
