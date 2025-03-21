@@ -62,6 +62,16 @@ function doSignIn(token) {
     });
 }
 
+// Quantumult X 配置
+// [mitm]
+// hostname = cngm.cn-np.com, smart-area-api.cn-np.com
+
+// [rewrite_local]
+// ^https://cngm\.cn-np\.com/ script-request-header SmartCanteen.js
+
+// [task_local]
+// 0 9 * * * SmartCanteen.js, tag=智慧食堂签到, enabled=true
+
 function Env(t) {
     this.name = t;
     this.data = {};
