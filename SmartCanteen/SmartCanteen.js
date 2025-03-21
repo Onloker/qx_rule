@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.3
+版本号：1.0.4
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -18,7 +18,7 @@ const API_2 = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
 
 // 捕获 Authorization
 if (typeof $request !== 'undefined') {
-    $.log("捕获 Authorization 开始...");
+    $.log("开始捕获 Authorization...");
     try {
         const headers = $request.headers;
         const authHeader = headers["Authorization"] || headers["authorization"];
@@ -33,36 +33,37 @@ if (typeof $request !== 'undefined') {
         $.logErr("捕获 Authorization 失败: " + error);
     }
     $.done();
+    return; // 捕获逻辑结束，退出脚本
 }
 
-// 签到主函数
+// 定时任务逻辑
 !(async () => {
-    $.log("签到主函数开始...");
+    $.log("定时任务执行中...");
     try {
+        // 读取存储的 Token
         const token = $.getdata(TOKEN_KEY);
-
         if (!token) {
             $.msg("智慧食堂签到", "未找到有效的 Token", "请先打开 App 捕获 Token");
             return;
         }
 
-        $.log(`使用 Token: ${token}`);
-        // 请求签到接口
-        const response = await signIn(token);
+        $.log(`读取到 Token: ${token}`);
 
+        // 调用签到接口
+        const response = await signIn(token);
         if (response && response.success) {
             $.msg("智慧食堂签到", "签到成功", `🎉 签到结果: ${JSON.stringify(response)}`);
         } else {
             $.msg("智慧食堂签到", "签到失败", response ? response.message : "未知错误");
         }
     } catch (error) {
-        $.logErr("签到主函数运行失败: " + error);
+        $.logErr("定时任务执行失败: " + error);
     } finally {
         $.done();
     }
 })();
 
-// 签到请求
+// 签到请求逻辑
 async function signIn(token) {
     const headers = {
         "Authorization": token,
@@ -93,7 +94,7 @@ async function signIn(token) {
     });
 }
 
-// 环境类封装
+// 环境封装类
 function Env(name) {
     this.name = name;
     this.log = (msg) => console.log(`[${this.name}] ${msg}`);
@@ -106,6 +107,6 @@ function Env(name) {
         post: (options, callback) => {
             const request = require("request");
             request.post(options, callback);
-        }
+        };
     };
 }
