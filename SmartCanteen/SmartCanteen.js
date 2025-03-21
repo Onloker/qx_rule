@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.1
+版本号：1.0.2
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -26,10 +26,10 @@ if (typeof $request !== 'undefined') {
             $.setdata(authHeader, TOKEN_KEY);
             $.msg("智慧食堂签到", "Token 捕获成功", authHeader);
         } else {
-            throw new Error("未捕获到有效的 Authorization");
+            $.msg("智慧食堂签到", "未捕获到有效的 Authorization");
         }
     } catch (error) {
-        $.msg("智慧食堂签到", "❌ 捕获 Token 失败", error.message);
+        $.logErr("捕获 Authorization 失败: " + error);
     }
     $.done();
 }
@@ -40,7 +40,8 @@ if (typeof $request !== 'undefined') {
         const token = $.getdata(TOKEN_KEY);
 
         if (!token) {
-            throw new Error("未找到有效的 Token，请先打开 App 捕获 Token");
+            $.msg("智慧食堂签到", "未找到有效的 Token", "请先打开 App 捕获 Token");
+            return;
         }
 
         // 请求签到接口
@@ -49,12 +50,13 @@ if (typeof $request !== 'undefined') {
         if (response && response.success) {
             $.msg("智慧食堂签到", "签到成功", `🎉 签到结果: ${JSON.stringify(response)}`);
         } else {
-            throw new Error(response ? response.message : "未知错误");
+            $.msg("智慧食堂签到", "签到失败", response ? response.message : "未知错误");
         }
     } catch (error) {
-        $.msg("智慧食堂签到", "签到失败", error.message);
+        $.logErr("签到主函数运行失败: " + error);
+    } finally {
+        $.done();
     }
-    $.done();
 })();
 
 // 签到请求
@@ -70,22 +72,16 @@ async function signIn(token) {
         method: "POST"
     };
 
-    try {
-        const response = await httpRequest(options);
-        return JSON.parse(response);
-    } catch (error) {
-        throw new Error("签到请求失败: " + error.message);
-    }
-}
-
-// HTTP 请求封装
-async function httpRequest(options) {
     return new Promise((resolve, reject) => {
         $.http.post(options, (err, resp, data) => {
             if (err) {
-                reject(err);
+                reject("签到请求失败: " + err);
             } else {
-                resolve(data);
+                try {
+                    resolve(JSON.parse(data));
+                } catch (parseErr) {
+                    reject("解析响应失败: " + parseErr);
+                }
             }
         });
     });
@@ -104,6 +100,6 @@ function Env(name) {
         post: (options, callback) => {
             const request = require("request");
             request.post(options, callback);
-        };
+        }
     };
 }
