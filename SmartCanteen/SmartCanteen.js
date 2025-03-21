@@ -14,41 +14,47 @@ const $ = new Env("智慧食堂签到");
 const TOKEN_KEY = "smartcanteen_auth_token";
 const API_2 = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
 
-// 监听请求头，获取Authorization
+// 捕获 Authorization 或 token
 if (typeof $request !== 'undefined') {
-    const headers = $request.headers;
-    const authHeader = headers["Authorization"] || headers["authorization"];
-    const tokenHeader = headers["token"] || headers["Token"];
+    try {
+        const headers = $request.headers;
+        const authHeader = headers["Authorization"] || headers["authorization"];
+        const tokenHeader = headers["token"] || headers["Token"];
 
-    // 优先使用 Authorization，其次使用 token
-    const token = authHeader && authHeader.startsWith("bearer ") ? authHeader : tokenHeader;
+        // 优先使用 Authorization，其次使用 token
+        const token = authHeader && authHeader.startsWith("bearer ") ? authHeader : tokenHeader;
 
-    if (token) {
-        $.setdata(token, TOKEN_KEY);
-        $.msg("智慧食堂签到", "Token 捕获成功", token);
-    } else {
-        $.msg("智慧食堂签到", "未捕获到 Token", "请检查请求是否包含 Authorization 或 token");
+        if (token) {
+            $.setdata(token, TOKEN_KEY);
+            $.msg("智慧食堂签到", "Token 捕获成功", token);
+        } else {
+            throw new Error("未捕获到有效的 Token");
+        }
+    } catch (error) {
+        $.msg("智慧食堂签到", "❌ 捕获 Token 失败", error.message);
     }
     $.done();
 }
 
 // 签到主函数
 !(async () => {
-    const token = $.getdata(TOKEN_KEY);
+    try {
+        const token = $.getdata(TOKEN_KEY);
 
-    if (!token) {
-        $.msg("智慧食堂签到", "❌ 未找到有效的 Token", "请先运行 App 以捕获 Token");
-        $.done();
-        return;
-    }
+        if (!token) {
+            throw new Error("未找到有效的 Token，请先打开 App 捕获 Token");
+        }
 
-    // 请求签到接口
-    const response = await signIn(token);
+        // 请求签到接口
+        const response = await signIn(token);
 
-    if (response) {
-        $.msg("智慧食堂签到", "签到成功", `🎉 签到结果: ${response}`);
-    } else {
-        $.msg("智慧食堂签到", "签到失败", "请检查网络或 Token 是否有效");
+        if (response && response.success) {
+            $.msg("智慧食堂签到", "签到成功", `🎉 签到结果: ${JSON.stringify(response)}`);
+        } else {
+            throw new Error(response ? response.message : "未知错误");
+        }
+    } catch (error) {
+        $.msg("智慧食堂签到", "签到失败", error.message);
     }
     $.done();
 })();
@@ -68,10 +74,9 @@ async function signIn(token) {
 
     try {
         const response = await httpRequest(options);
-        return response;
+        return JSON.parse(response);
     } catch (error) {
-        $.logErr(error);
-        return null;
+        throw new Error("签到请求失败: " + error.message);
     }
 }
 
