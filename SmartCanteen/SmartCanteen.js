@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.4
+版本号：1.0.5
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -107,6 +107,6 @@ function Env(name) {
         post: (options, callback) => {
             const request = require("request");
             request.post(options, callback);
-        };
+        }
     };
 }
