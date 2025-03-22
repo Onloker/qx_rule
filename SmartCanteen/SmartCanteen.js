@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.10
+版本号：1.0.11
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -16,7 +16,7 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 let authorization = "";
 
 // 获取 Authorization 值并存储
-function fetchAuthorization() {
+async function fetchAuthorization() {
     const url = "https://cngm.cn-np.com"; // 目标链接
     const options = {
         method: "POST",
@@ -25,27 +25,24 @@ function fetchAuthorization() {
         },
     };
 
-    $httpClient.post(url, options, (error, response, data) => {
-        if (error) {
-            console.log("获取 Authorization 失败: " + error);
-        } else {
-            // 提取 Authorization 值
-            const headers = response.headers;
-            if (headers["Authorization"] && headers["Authorization"].startsWith("bearer")) {
-                authorization = headers["Authorization"];
-                console.log("成功获取 Authorization: " + authorization);
+    try {
+        const response = await fetch(url, options);
+        const headers = response.headers;
+        const auth = headers.get("Authorization");
 
-                // 可选择存储到本地，方便后续使用
-                $persistentStore.write(authorization, "Authorization");
-            } else {
-                console.log("未找到有效的 Authorization 字段");
-            }
+        if (auth && auth.startsWith("bearer")) {
+            authorization = auth;
+            console.log("成功获取 Authorization: " + authorization);
+        } else {
+            console.log("未找到有效的 Authorization 字段");
         }
-    });
+    } catch (error) {
+        console.log("获取 Authorization 失败: " + error);
+    }
 }
 
 // 自动签到功能
-function autoSignIn() {
+async function autoSignIn() {
     if (!authorization) {
         console.log("未找到 Authorization，无法签到");
         return;
@@ -60,27 +57,22 @@ function autoSignIn() {
         },
     };
 
-    $httpClient.post(signInUrl, options, (error, response, data) => {
-        if (error) {
-            console.log("签到失败: " + error);
+    try {
+        const response = await fetch(signInUrl, options);
+        const data = await response.json();
+
+        if (data.code === 401) {
+            console.log("签到失败: " + data.msg);
         } else {
-            try {
-                const result = JSON.parse(data);
-                if (result.code === 401) {
-                    console.log("签到失败: " + result.msg);
-                    $notification.post("签到通知", "签到失败", result.msg);
-                } else {
-                    console.log("签到成功: " + data);
-                    $notification.post("签到通知", "签到成功", "成功完成智慧食堂签到！");
-                }
-            } catch (e) {
-                console.log("解析返回结果失败: " + e);
-            }
+            console.log("签到成功: " + JSON.stringify(data));
         }
-    });
+    } catch (error) {
+        console.log("签到失败: " + error);
+    }
 }
 
 // 执行流程
-fetchAuthorization();
-// 延迟执行签到，确保获取到 Authorization 后运行
-setTimeout(autoSignIn, 3000);
+(async function() {
+    await fetchAuthorization();
+    await autoSignIn();
+})();
