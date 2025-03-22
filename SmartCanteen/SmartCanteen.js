@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.9
+版本号：1.0.10
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -12,109 +12,75 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 0 9 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, enabled=true
 ******************************************/
 
-const $ = new Env("智慧食堂签到");
-const TOKEN_KEY = "smartcanteen_auth_token";
-const API_2 = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
+// 定义存储 Authorization 的变量
+let authorization = "";
 
-// 主函数入口
-!(async () => {
-    try {
-        const token = $.getdata(TOKEN_KEY);
-
-        if (!token && typeof $request !== 'undefined') {
-            // 捕获 Authorization
-            $.log("开始捕获 Authorization...");
-            const headers = $request.headers;
-            const authHeader = headers["Authorization"] || headers["authorization"];
-
-            if (authHeader && authHeader.startsWith("bearer ")) {
-                $.setdata(authHeader, TOKEN_KEY);
-                $.msg("智慧食堂签到", "Token 捕获成功", authHeader);
-                $.log("已捕获并存储最新的 Token。");
-            } else {
-                $.msg("智慧食堂签到", "未捕获到有效的 Authorization");
-                $.log("捕获失败，没有有效的 Authorization 值。");
-            }
-            $.done();
-            return;
-        }
-
-        if (token) {
-            // 调用签到逻辑
-            $.log(`读取到存储的 Token: ${token}`);
-            const response = await signIn(token);
-
-            if (response && response.success) {
-                $.msg("智慧食堂签到", "签到成功", `🎉 签到结果: ${JSON.stringify(response)}`);
-            } else {
-                $.msg("智慧食堂签到", "签到失败", response ? response.message : "未知错误");
-            }
-        } else {
-            $.msg("智慧食堂签到", "未找到有效的 Token", "请先打开 App 捕获 Token");
-        }
-    } catch (error) {
-        $.logErr("脚本运行失败: " + error);
-    } finally {
-        $.done();
-    }
-})();
-
-// 签到请求逻辑
-async function signIn(token) {
-    const headers = {
-        "Authorization": token,
-        "Content-Type": "application/json"
-    };
-
+// 获取 Authorization 值并存储
+function fetchAuthorization() {
+    const url = "https://cngm.cn-np.com"; // 目标链接
     const options = {
-        url: API_2,
-        headers: headers,
         method: "POST",
-        timeout: 10000 // 设置超时时间为 10 秒
+        headers: {
+            "User-Agent": "iosbusiness/3.27.0 (iPhone; iOS 17.1.1; Scale/3.00)",
+        },
     };
 
-    $.log("准备发起签到请求...");
+    $httpClient.post(url, options, (error, response, data) => {
+        if (error) {
+            console.log("获取 Authorization 失败: " + error);
+        } else {
+            // 提取 Authorization 值
+            const headers = response.headers;
+            if (headers["Authorization"] && headers["Authorization"].startsWith("bearer")) {
+                authorization = headers["Authorization"];
+                console.log("成功获取 Authorization: " + authorization);
 
-    return new Promise((resolve, reject) => {
-        $.http.post(options, (err, resp, data) => {
-            if (err) {
-                $.logErr("签到请求失败: " + err);
-                reject(err);
+                // 可选择存储到本地，方便后续使用
+                $persistentStore.write(authorization, "Authorization");
             } else {
-                try {
-                    if (resp && resp.statusCode) {
-                        $.log(`签到响应状态码: ${resp.statusCode}`);
-                    } else {
-                        $.log("未获取到响应状态码。");
-                    }
-                    if (data) {
-                        $.log("签到响应数据: " + data);
-                        resolve(JSON.parse(data));
-                    } else {
-                        throw new Error("响应数据为空");
-                    }
-                } catch (parseErr) {
-                    $.logErr("解析响应失败: " + parseErr);
-                    reject(parseErr);
-                }
+                console.log("未找到有效的 Authorization 字段");
             }
-        });
+        }
     });
 }
 
-// 环境封装类
-function Env(name) {
-    this.name = name;
-    this.log = (msg) => console.log(`[${this.name}] ${msg}`);
-    this.logErr = (err) => console.error(`[${this.name}]`, err);
-    this.msg = (title, subtitle, content) => console.log(`\n${title}\n${subtitle || ''}\n${content || ''}`);
-    this.getdata = (key) => $prefs.valueForKey(key);
-    this.setdata = (val, key) => $prefs.setValueForKey(val, key);
-    this.done = () => $done();
-    this.http = {
-        post: (options, callback) => {
-            const request = require("request");
-            request.post(options, callback);
-        }
+// 自动签到功能
+function autoSignIn() {
+    if (!authorization) {
+        console.log("未找到 Authorization，无法签到");
+        return;
+    }
+
+    const signInUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle"; // 智慧食堂签到接口
+    const options = {
+        method: "POST",
+        headers: {
+            "Authorization": authorization,
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
     };
+
+    $httpClient.post(signInUrl, options, (error, response, data) => {
+        if (error) {
+            console.log("签到失败: " + error);
+        } else {
+            try {
+                const result = JSON.parse(data);
+                if (result.code === 401) {
+                    console.log("签到失败: " + result.msg);
+                    $notification.post("签到通知", "签到失败", result.msg);
+                } else {
+                    console.log("签到成功: " + data);
+                    $notification.post("签到通知", "签到成功", "成功完成智慧食堂签到！");
+                }
+            } catch (e) {
+                console.log("解析返回结果失败: " + e);
+            }
+        }
+    });
 }
+
+// 执行流程
+fetchAuthorization();
+// 延迟执行签到，确保获取到 Authorization 后运行
+setTimeout(autoSignIn, 3000);
