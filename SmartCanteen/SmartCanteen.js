@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.11
+版本号：1.0.12
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -27,6 +27,12 @@ async function fetchAuthorization() {
 
     try {
         const response = await fetch(url, options);
+
+        if (!response.ok) {
+            console.log("获取 Authorization 请求失败，状态码: " + response.status);
+            return;
+        }
+
         const headers = response.headers;
         const auth = headers.get("Authorization");
 
@@ -34,7 +40,8 @@ async function fetchAuthorization() {
             authorization = auth;
             console.log("成功获取 Authorization: " + authorization);
         } else {
-            console.log("未找到有效的 Authorization 字段");
+            console.log("未找到有效的 Authorization 字段，响应头如下:");
+            console.log(headers);
         }
     } catch (error) {
         console.log("获取 Authorization 失败: " + error);
@@ -59,6 +66,12 @@ async function autoSignIn() {
 
     try {
         const response = await fetch(signInUrl, options);
+
+        if (!response.ok) {
+            console.log("签到请求失败，状态码: " + response.status);
+            return;
+        }
+
         const data = await response.json();
 
         if (data.code === 401) {
@@ -74,5 +87,11 @@ async function autoSignIn() {
 // 执行流程
 (async function() {
     await fetchAuthorization();
+
+    if (!authorization) {
+        console.log("流程中止：未能获取到 Authorization");
+        return;
+    }
+
     await autoSignIn();
 })();
