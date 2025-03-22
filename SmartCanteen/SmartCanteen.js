@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.12
+版本号：1.0.13
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -41,7 +41,9 @@ async function fetchAuthorization() {
             console.log("成功获取 Authorization: " + authorization);
         } else {
             console.log("未找到有效的 Authorization 字段，响应头如下:");
-            console.log(headers);
+            for (let [key, value] of headers.entries()) {
+                console.log(`${key}: ${value}`);
+            }
         }
     } catch (error) {
         console.log("获取 Authorization 失败: " + error);
@@ -84,14 +86,29 @@ async function autoSignIn() {
     }
 }
 
+// 添加超时控制函数
+function timeout(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // 执行流程
 (async function() {
-    await fetchAuthorization();
+    try {
+        await Promise.race([
+            fetchAuthorization(), 
+            timeout(10000).then(() => { throw new Error("获取 Authorization 超时"); })
+        ]);
 
-    if (!authorization) {
-        console.log("流程中止：未能获取到 Authorization");
-        return;
+        if (!authorization) {
+            console.log("流程中止：未能获取到 Authorization");
+            return;
+        }
+
+        await Promise.race([
+            autoSignIn(),
+            timeout(10000).then(() => { throw new Error("签到超时"); })
+        ]);
+    } catch (error) {
+        console.log("脚本运行错误: " + error.message);
     }
-
-    await autoSignIn();
 })();
