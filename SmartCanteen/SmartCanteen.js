@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.13
+版本号：1.0.14
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -13,42 +13,7 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 ******************************************/
 
 // 定义存储 Authorization 的变量
-let authorization = "";
-
-// 获取 Authorization 值并存储
-async function fetchAuthorization() {
-    const url = "https://cngm.cn-np.com"; // 目标链接
-    const options = {
-        method: "POST",
-        headers: {
-            "User-Agent": "iosbusiness/3.27.0 (iPhone; iOS 17.1.1; Scale/3.00)",
-        },
-    };
-
-    try {
-        const response = await fetch(url, options);
-
-        if (!response.ok) {
-            console.log("获取 Authorization 请求失败，状态码: " + response.status);
-            return;
-        }
-
-        const headers = response.headers;
-        const auth = headers.get("Authorization");
-
-        if (auth && auth.startsWith("bearer")) {
-            authorization = auth;
-            console.log("成功获取 Authorization: " + authorization);
-        } else {
-            console.log("未找到有效的 Authorization 字段，响应头如下:");
-            for (let [key, value] of headers.entries()) {
-                console.log(`${key}: ${value}`);
-            }
-        }
-    } catch (error) {
-        console.log("获取 Authorization 失败: " + error);
-    }
-}
+let authorization = "bearer 5f249fe1-debe-4283-854b-42c550ab1c86"; // 示例值，实际需要替换为真实值
 
 // 自动签到功能
 async function autoSignIn() {
@@ -86,28 +51,10 @@ async function autoSignIn() {
     }
 }
 
-// 添加超时控制函数
-function timeout(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 // 执行流程
 (async function() {
     try {
-        await Promise.race([
-            fetchAuthorization(), 
-            timeout(10000).then(() => { throw new Error("获取 Authorization 超时"); })
-        ]);
-
-        if (!authorization) {
-            console.log("流程中止：未能获取到 Authorization");
-            return;
-        }
-
-        await Promise.race([
-            autoSignIn(),
-            timeout(10000).then(() => { throw new Error("签到超时"); })
-        ]);
+        await autoSignIn();
     } catch (error) {
         console.log("脚本运行错误: " + error.message);
     }
