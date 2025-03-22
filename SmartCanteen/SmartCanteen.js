@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.14
+版本号：1.0.15
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -13,13 +13,33 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 ******************************************/
 
 // 定义存储 Authorization 的变量
-let authorization = "bearer 5f249fe1-debe-4283-854b-42c550ab1c86"; // 示例值，实际需要替换为真实值
+let authorization = "";
+
+// 获取 Authorization 值并存储
+function captureAuthorization() {
+    if (typeof $request !== "undefined") {
+        const headers = $request.headers;
+        if (headers && headers["Authorization"] && headers["Authorization"].startsWith("bearer")) {
+            authorization = headers["Authorization"];
+            console.log("成功捕获 Authorization: " + authorization);
+            $persistentStore.write(authorization, "Authorization"); // 存储 Authorization
+            $notification.post("获取 Authorization 成功", "", authorization);
+        } else {
+            console.log("未找到有效的 Authorization");
+        }
+    } else {
+        console.log("$request 未定义，无法捕获 Authorization");
+    }
+}
 
 // 自动签到功能
 async function autoSignIn() {
     if (!authorization) {
-        console.log("未找到 Authorization，无法签到");
-        return;
+        authorization = $persistentStore.read("Authorization") || "";
+        if (!authorization) {
+            console.log("未找到 Authorization，无法签到");
+            return;
+        }
     }
 
     const signInUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle"; // 智慧食堂签到接口
@@ -43,19 +63,27 @@ async function autoSignIn() {
 
         if (data.code === 401) {
             console.log("签到失败: " + data.msg);
+            $notification.post("签到失败", "", data.msg);
         } else {
             console.log("签到成功: " + JSON.stringify(data));
+            $notification.post("签到成功", "", "成功完成智慧食堂签到！");
         }
     } catch (error) {
         console.log("签到失败: " + error);
     }
 }
 
-// 执行流程
-(async function() {
-    try {
-        await autoSignIn();
-    } catch (error) {
-        console.log("脚本运行错误: " + error.message);
-    }
-})();
+// 判断是否是获取 Authorization 的请求
+if (typeof $request !== "undefined") {
+    captureAuthorization();
+    $done({});
+} else {
+    // 执行签到流程
+    (async function () {
+        try {
+            await autoSignIn();
+        } catch (error) {
+            console.log("脚本运行错误: " + error.message);
+        }
+    })();
+}
