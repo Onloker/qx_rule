@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.1
-更新时间：2025-04-08 17:10
+版本号：1.1.2
+更新时间：2025-04-08 17:18
 
 [mitm]
 hostname = cngm.cn-np.com
@@ -61,7 +61,7 @@ if (typeof $request === "undefined") {
         try {
           const data = JSON.parse(response.body);
           const msg = data.msg || "未知返回";
-		  console.log("智慧食堂签到", "", msg);
+		  console.log("智慧食堂签到："\n + msg);
           $notify("智慧食堂签到", "", msg);
         } catch (e) {
           console.log("签到失败", "", "返回内容解析失败：" + e);
