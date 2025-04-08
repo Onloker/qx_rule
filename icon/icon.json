@@ -18,5 +18,9 @@
             "name":"ByteDance",
             "url":"https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/ByteDance.png"
         }
+		{
+            "name":"cornex",
+            "url":"https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png"
+        }
     ],
 }
