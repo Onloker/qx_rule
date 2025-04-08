@@ -1,7 +1,7 @@
 /******************************************
-版本号：1.0.18
-
-更新时间：2025-04-08 15:50:51
+作者：Onloker
+版本号：1.0.19
+更新时间：2025-04-08 15:54
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -50,7 +50,6 @@ async function autoSignIn() {
     }
 
     const signInUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
-    // 智慧食堂签到接口
     const options = {
         method: "POST",
         headers: {
@@ -70,8 +69,9 @@ async function autoSignIn() {
         const data = await response.json();
 
         if (data.code === 401) {
-            console.log("签到失败: " + data.msg);
-            $notify("签到失败", "", data.msg);
+            const msg = typeof data.msg === "object" ? JSON.stringify(data.msg) : data.msg;
+            console.log("签到失败: " + msg);
+            $notify("签到失败", "", msg);
         } else {
             console.log("签到成功: " + JSON.stringify(data));
             $notify("签到成功", "", "成功完成智慧食堂签到！");
