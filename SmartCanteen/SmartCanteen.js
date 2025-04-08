@@ -1,5 +1,5 @@
 /******************************************
-版本号：1.0.15
+版本号：1.0.16
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -17,15 +17,15 @@ let authorization = "";
 
 // 获取 Authorization 值并存储
 function captureAuthorization() {
-    if (typeof $request !== "undefined") {
-        const headers = $request.headers;
-        if (headers && headers["Authorization"] && headers["Authorization"].startsWith("bearer")) {
-            authorization = headers["Authorization"];
+    if ($request !== undefined) {
+        const authorizationArg = $request?.headers?.["Authorization"];
+        if (authorizationArg && authorizationArg.startsWith("bearer")) {
+            authorization = authorizationArg;
             console.log("成功捕获 Authorization: " + authorization);
-            $persistentStore.write(authorization, "Authorization"); // 存储 Authorization
-            $notification.post("获取 Authorization 成功", "", authorization);
+            $prefs.setValueForKey(authorization, "Authorization"); // 存储 Authorization
+            $notify("获取 Authorization 成功", "", authorization);
         } else {
-            console.log("未找到有效的 Authorization");
+            console.log("未找到有效的 Authorization, headers:");
         }
     } else {
         console.log("$request 未定义，无法捕获 Authorization");
@@ -35,7 +35,7 @@ function captureAuthorization() {
 // 自动签到功能
 async function autoSignIn() {
     if (!authorization) {
-        authorization = $persistentStore.read("Authorization") || "";
+        authorization = $prefs.valueForKey("Authorization") || "";
         if (!authorization) {
             console.log("未找到 Authorization，无法签到");
             return;
@@ -52,9 +52,9 @@ async function autoSignIn() {
     };
 
     try {
-        const response = await fetch(signInUrl, options);
+        const response = await $task.fetch(signInUrl, options);
 
-        if (!response.ok) {
+        if (!response?.ok) {
             console.log("签到请求失败，状态码: " + response.status);
             return;
         }
@@ -63,10 +63,10 @@ async function autoSignIn() {
 
         if (data.code === 401) {
             console.log("签到失败: " + data.msg);
-            $notification.post("签到失败", "", data.msg);
+            $notify("签到失败", "", data.msg);
         } else {
             console.log("签到成功: " + JSON.stringify(data));
-            $notification.post("签到成功", "", "成功完成智慧食堂签到！");
+            $notify("签到成功", "", "成功完成智慧食堂签到！");
         }
     } catch (error) {
         console.log("签到失败: " + error);
@@ -74,7 +74,7 @@ async function autoSignIn() {
 }
 
 // 判断是否是获取 Authorization 的请求
-if (typeof $request !== "undefined") {
+if ($request !== undefined) {
     captureAuthorization();
     $done({});
 } else {
