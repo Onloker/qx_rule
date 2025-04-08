@@ -61,13 +61,16 @@ if (typeof $request === "undefined") {
         try {
           const data = JSON.parse(response.body);
           const msg = data.msg || "未知返回";
+		  console.log("智慧食堂签到", "", msg);
           $notify("智慧食堂签到", "", msg);
         } catch (e) {
-          $notify("签到失败", "", "返回内容解析失败：" + e);
+          console.log("签到失败", "", "返回内容解析失败：" + e);
+		  $notify("签到失败", "", "返回内容解析失败：" + e);
         }
         $done();
       },
       (error) => {
+		console.log("签到失败", "", "网络请求失败：" + error);
         $notify("签到失败", "", "网络请求失败：" + error);
         $done();
       }
