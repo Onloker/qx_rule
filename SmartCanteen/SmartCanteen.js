@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.0.24
-更新时间：2025-04-08 16:50
+版本号：1.1.0
+更新时间：2025-04-08 17:10
 
 [mitm]
 hostname = cngm.cn-np.com
@@ -14,10 +14,9 @@ hostname = cngm.cn-np.com
 0 9 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
 ******************************************/
 
-// 智慧食堂 - 抓取 Authorization + 自动签到（适用于 Quantumult X）
+// 获取 Token
 const tokenKey = "Authorization";
 
-// 抓 Authorization（用于 rewrite 请求头脚本）
 if (typeof $request !== "undefined") {
   const newToken = $request.headers?.Authorization;
   const oldToken = $prefs.valueForKey(tokenKey);
@@ -25,23 +24,26 @@ if (typeof $request !== "undefined") {
   if (newToken) {
     if (newToken !== oldToken) {
       $prefs.setValueForKey(newToken, tokenKey);
-      $notify("抓取 Authorization 成功", "", `已更新: ${newToken}`);
+	  console.log("获取 Authorization 成功，Authorization： " + newToken);
+      $notify("获取 Token 成功");
     } else {
       console.log("Authorization 未变化，无需更新");
     }
   } else {
-    $notify("抓取 Authorization 失败", "", "未在请求头中发现 Authorization");
+	console.log("获取 Authorization 失败", "", "未在请求头中发现 Authorization");
+    $notify("获取 Token 失败", "", "未发现 Token");
   }
 
   $done();
 }
 
-// 定时任务 - 自动签到逻辑
+// 自动签到
 if (typeof $request === "undefined") {
   const authorization = $prefs.valueForKey(tokenKey);
 
   if (!authorization) {
-    $notify("签到失败", "", "未获取到 Authorization，请先抓包！");
+	console.log("签到失败", "", "未获取到 Authorization，请先获取Authorization！");
+    $notify("签到失败", "", "未获取到 Token！");
     $done();
   } else {
     const signUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
