@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.2
-更新时间：2025-04-08 17:18
+版本号：1.1.3
+更新时间：2025-04-08 17:21
 
 [mitm]
 hostname = cngm.cn-np.com
@@ -24,13 +24,11 @@ if (typeof $request !== "undefined") {
   if (newToken) {
     if (newToken !== oldToken) {
       $prefs.setValueForKey(newToken, tokenKey);
-	  console.log("获取 Authorization 成功，Authorization： " + newToken);
       $notify("获取 Token 成功");
     } else {
       console.log("Authorization 未变化，无需更新");
     }
   } else {
-	console.log("获取 Authorization 失败", "", "未在请求头中发现 Authorization");
     $notify("获取 Token 失败", "", "未发现 Token");
   }
 
@@ -42,7 +40,6 @@ if (typeof $request === "undefined") {
   const authorization = $prefs.valueForKey(tokenKey);
 
   if (!authorization) {
-	console.log("签到失败", "", "未获取到 Authorization，请先获取Authorization！");
     $notify("签到失败", "", "未获取到 Token！");
     $done();
   } else {
@@ -61,16 +58,13 @@ if (typeof $request === "undefined") {
         try {
           const data = JSON.parse(response.body);
           const msg = data.msg || "未知返回";
-		  console.log("智慧食堂签到："\n + msg);
           $notify("智慧食堂签到", "", msg);
         } catch (e) {
-          console.log("签到失败", "", "返回内容解析失败：" + e);
 		  $notify("签到失败", "", "返回内容解析失败：" + e);
         }
         $done();
       },
       (error) => {
-		console.log("签到失败", "", "网络请求失败：" + error);
         $notify("签到失败", "", "网络请求失败：" + error);
         $done();
       }
