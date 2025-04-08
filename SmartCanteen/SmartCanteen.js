@@ -1,5 +1,7 @@
 /******************************************
-版本号：1.0.17
+版本号：1.0.18
+
+更新时间：2025-04-08 15:50:51
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -15,15 +17,20 @@ hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 // 定义存储 Authorization 的变量
 let authorization = "";
 
-// 获取 Authorization 值并存储
+// 获取 Authorization 值并存储（只在 Authorization 变化时才通知）
 function captureAuthorization() {
     if ($request !== undefined) {
         const authorizationArg = $request?.headers?.["Authorization"];
         if (authorizationArg && authorizationArg.startsWith("bearer")) {
-            authorization = authorizationArg;
-            console.log("成功捕获 Authorization: " + authorization);
-            $prefs.setValueForKey(authorization, "Authorization"); // 存储 Authorization
-            $notify("获取 Authorization 成功", "", authorization);
+            const oldAuth = $prefs.valueForKey("Authorization") || "";
+            if (authorizationArg !== oldAuth) {
+                authorization = authorizationArg;
+                console.log("捕获新的 Authorization: " + authorization);
+                $prefs.setValueForKey(authorization, "Authorization"); // 存储新的 Authorization
+                $notify("获取 Authorization 成功", "", authorization);
+            } else {
+                console.log("Authorization 未变化，无需通知");
+            }
         } else {
             console.log("未找到有效的 Authorization, headers:");
         }
@@ -42,7 +49,8 @@ async function autoSignIn() {
         }
     }
 
-    const signInUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle"; // 智慧食堂签到接口
+    const signInUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
+    // 智慧食堂签到接口
     const options = {
         method: "POST",
         headers: {
