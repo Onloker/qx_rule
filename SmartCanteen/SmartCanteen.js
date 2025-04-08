@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.0.21
-更新时间：2025-04-08 16:30
+版本号：1.0.22
+更新时间：2025-04-08 16:38
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
@@ -46,6 +46,7 @@ function autoSignIn() {
         if (!authorization) {
             console.log("未找到 Authorization，无法签到");
             $notify("签到失败", "", "未找到有效的 Authorization");
+            $done();  // <- 明确结束脚本
             return;
         }
     }
@@ -69,8 +70,10 @@ function autoSignIn() {
             console.log("解析响应失败: " + e);
             $notify("签到失败", "", "响应解析失败");
         }
+        $done();  // <- 请求成功或失败后都结束脚本
     }, error => {
         console.log("请求出错: " + error);
         $notify("签到失败", "", "网络请求失败");
+        $done();  // <- 请求异常时也结束脚本
     });
 }
