@@ -40,11 +40,12 @@ function captureAuthorization() {
 }
 
 // 自动签到功能
-async function autoSignIn() {
+function autoSignIn() {
     if (!authorization) {
         authorization = $prefs.valueForKey("Authorization") || "";
         if (!authorization) {
             console.log("未找到 Authorization，无法签到");
+            $notify("签到失败", "", "未找到有效的 Authorization");
             return;
         }
     }
@@ -58,26 +59,18 @@ async function autoSignIn() {
         },
     };
 
-    try {
-        const response = await $task.fetch(signInUrl, options);
-
-        if (!response?.ok) {
-            console.log("签到请求失败，状态码: " + response.status);
-            $notify("签到失败", "HTTP错误", `状态码: ${response.status}`);
-            return;
+    $task.fetch(signInUrl, options).then(response => {
+        try {
+            const data = JSON.parse(response.body);
+            const msg = typeof data.msg === "string" ? data.msg : JSON.stringify(data.msg);
+            console.log("签到返回信息: " + msg);
+            $notify("智慧食堂签到", "", msg);
+        } catch (e) {
+            console.log("解析响应失败: " + e);
+            $notify("签到失败", "", "响应解析失败");
         }
-
-        const data = await response.json();
-        console.log("签到返回内容：", JSON.stringify(data));
-
-        if (data.code === 200) {
-            $notify("签到成功", "", "成功完成智慧食堂签到！");
-        } else {
-            const msg = JSON.stringify(data); // 格式化整个响应内容
-            $notify("签到失败", "服务器返回如下信息", msg);
-        }
-    } catch (error) {
-        console.log("签到异常: " + error);
-        $notify("签到失败", "发生异常", error.message || String(error));
-    }
+    }, error => {
+        console.log("请求出错: " + error);
+        $notify("签到失败", "", "网络请求失败");
+    });
 }
