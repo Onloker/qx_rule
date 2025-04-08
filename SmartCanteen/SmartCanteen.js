@@ -1,12 +1,12 @@
 /******************************************
-版本号：1.0.16
+版本号：1.0.17
 
 [mitm]
 hostname = cngm.cn-np.com, smart-area-api.cn-np.com
 
 [rewrite_local]
 # 获取Token
-^https://cngm\.cn-np\.com/ script-request-header https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js
+^https:\/\/cngm\.cn-np\.com/ url script-request-header https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js
 
 [task_local]
 0 9 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, enabled=true
