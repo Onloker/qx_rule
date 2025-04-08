@@ -63,35 +63,21 @@ async function autoSignIn() {
 
         if (!response?.ok) {
             console.log("签到请求失败，状态码: " + response.status);
+            $notify("签到失败", "HTTP错误", `状态码: ${response.status}`);
             return;
         }
 
         const data = await response.json();
+        console.log("签到返回内容：", JSON.stringify(data));
 
-        if (data.code === 401) {
-            const msg = typeof data.msg === "object" ? JSON.stringify(data.msg) : data.msg;
-            console.log("签到失败: " + msg);
-            $notify("签到失败", "", msg);
-        } else {
-            console.log("签到成功: " + JSON.stringify(data));
+        if (data.code === 200) {
             $notify("签到成功", "", "成功完成智慧食堂签到！");
+        } else {
+            const msg = JSON.stringify(data); // 格式化整个响应内容
+            $notify("签到失败", "服务器返回如下信息", msg);
         }
     } catch (error) {
-        console.log("签到失败: " + error);
+        console.log("签到异常: " + error);
+        $notify("签到失败", "发生异常", error.message || String(error));
     }
-}
-
-// 判断是否是获取 Authorization 的请求
-if ($request !== undefined) {
-    captureAuthorization();
-    $done({});
-} else {
-    // 执行签到流程
-    (async function () {
-        try {
-            await autoSignIn();
-        } catch (error) {
-            console.log("脚本运行错误: " + error.message);
-        }
-    })();
 }
