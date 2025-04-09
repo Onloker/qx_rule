@@ -29,7 +29,7 @@ if (typeof $request !== "undefined") {
     if (newToken !== oldToken) {
       $prefs.setValueForKey(newToken, tokenKey);
       console.log("Authorization 已更新为：" + newToken);
-      $notify("获取 Token 成功");
+      $notify("获取 Token 成功", "", `${newToken}`);
     } else {
       console.log("Authorization 未变化，无需更新");
     }
