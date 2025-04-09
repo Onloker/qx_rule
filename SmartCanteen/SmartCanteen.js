@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.3
-更新时间：2025-04-08 17:21
+版本号：1.1.4
+更新时间：2025-04-09 10:30
 
 [mitm]
 hostname = cngm.cn-np.com
@@ -18,17 +18,23 @@ hostname = cngm.cn-np.com
 const tokenKey = "Authorization";
 
 if (typeof $request !== "undefined") {
+  console.log("触发获取 Authorization 请求");
+  console.log("请求头如下：");
+  console.log(JSON.stringify($request.headers, null, 2));
+
   const newToken = $request.headers?.Authorization;
   const oldToken = $prefs.valueForKey(tokenKey);
 
   if (newToken) {
     if (newToken !== oldToken) {
       $prefs.setValueForKey(newToken, tokenKey);
+      console.log("Authorization 已更新为：" + newToken);
       $notify("获取 Token 成功");
     } else {
       console.log("Authorization 未变化，无需更新");
     }
   } else {
+    console.log("获取 Authorization 失败", "", "未在请求头中发现 Authorization");
     $notify("获取 Token 失败", "", "未发现 Token");
   }
 
@@ -37,10 +43,12 @@ if (typeof $request !== "undefined") {
 
 // 自动签到
 if (typeof $request === "undefined") {
+  console.log("触发自动签到任务");
   const authorization = $prefs.valueForKey(tokenKey);
 
   if (!authorization) {
-    $notify("签到失败", "", "未获取到 Token！");
+    console.log("无法获取 Authorization，取消签到流程");
+	$notify("签到失败", "", "未获取到 Token！");
     $done();
   } else {
     const signUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
@@ -53,18 +61,29 @@ if (typeof $request === "undefined") {
       },
     };
 
+    console.log("准备发送签到请求，信息如下：");
+    console.log("请求 URL: " + options.url);
+    console.log("请求 Headers:");
+    console.log(JSON.stringify(options.headers, null, 2));
+
     $task.fetch(options).then(
       (response) => {
+        console.log("收到签到响应，原始内容如下：");
+        console.log(response.body);
+
         try {
           const data = JSON.parse(response.body);
           const msg = data.msg || "未知返回";
+          console.log("解析后的签到提示信息：" + msg);
           $notify("智慧食堂签到", "", msg);
         } catch (e) {
-		  $notify("签到失败", "", "返回内容解析失败：" + e);
+          console.log("解析响应 JSON 失败: " + e);
+          $notify("签到失败", "", "返回内容解析失败：" + e);
         }
         $done();
       },
       (error) => {
+        console.log("签到请求失败: " + error);
         $notify("签到失败", "", "网络请求失败：" + error);
         $done();
       }
