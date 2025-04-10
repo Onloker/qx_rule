@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.5
-更新时间：2025-04-09 10:45
+版本号：1.1.6
+更新时间：2025-04-10 14:20
 
 [mitm]
 hostname = cngm.cn-np.com
@@ -28,13 +28,13 @@ if (typeof $request !== "undefined") {
   if (newToken) {
     if (newToken !== oldToken) {
       $prefs.setValueForKey(newToken, tokenKey);
-      console.log("Authorization 已更新为：" + newToken);
+      console.log("获取 Authorization 成功，更新为：" + newToken);
       $notify("获取 Token 成功", "", `${newToken}`);
     } else {
       console.log("Authorization 未变化，无需更新");
     }
   } else {
-    console.log("获取 Authorization 失败", "", "未在请求头中发现 Authorization");
+    console.log("获取 Authorization 失败：未在请求头中发现 Authorization");
     $notify("获取 Token 失败", "", "未发现 Token");
   }
 
@@ -48,7 +48,7 @@ if (typeof $request === "undefined") {
 
   if (!authorization) {
     console.log("无法获取 Authorization，取消签到流程");
-	$notify("签到失败", "", "未获取到 Token！");
+    $notify("签到失败", "", "未获取到 Token！");
     $done();
   } else {
     const signUrl = "https://smart-area-api.cn-np.com/shop/SignIn/handle";
@@ -74,17 +74,27 @@ if (typeof $request === "undefined") {
         try {
           const data = JSON.parse(response.body);
           const msg = data.msg || "未知返回";
-          console.log("解析后的签到提示信息：" + msg);
-          $notify("智慧食堂签到", "", msg);
+
+          // 如果存在 data 字段，说明有积分信息
+          if (data.data && typeof data.data.score !== "undefined") {
+            const score = data.data.score;
+            console.log(`智慧食堂签到返回消息: ${msg}，本次获得积分: ${score}`);
+            $notify("智慧食堂签到成功", "", `${msg}，本次获得积分：${score}`);
+          } else {
+            // 没有 data 字段，仅显示 msg
+            console.log("智慧食堂签到返回消息：" + msg);
+            $notify("智慧食堂签到失败", "", msg);
+          }
+
         } catch (e) {
-          console.log("解析响应 JSON 失败: " + e);
-          $notify("签到失败", "", "返回内容解析失败：" + e);
+          console.log("签到失败：解析响应 JSON 失败: " + e);
+          $notify("智慧食堂签到失败", "", "返回内容解析失败：" + e);
         }
         $done();
       },
       (error) => {
-        console.log("签到请求失败: " + error);
-        $notify("签到失败", "", "网络请求失败：" + error);
+        console.log("智慧食堂签到失败：网络请求失败，错误：" + error);
+        $notify("智慧食堂签到失败", "", "网络请求失败：" + error);
         $done();
       }
     );
