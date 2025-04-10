@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.6
-更新时间：2025-04-10 14:20
+版本号：1.1.7
+更新时间：2025-04-10 15:30
 
 [mitm]
 hostname = cngm.cn-np.com
@@ -56,15 +56,29 @@ if (typeof $request === "undefined") {
       url: signUrl,
       method: "POST",
       headers: {
+        "Host": "smart-area-api.cn-np.com",
+        "Accept": "application/json, text/plain, */*",
         "Authorization": authorization,
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Sec-Fetch-Site": "same-site",
+        "Accept-Language": "zh-CN,zh-Hans;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Sec-Fetch-Mode": "cors",
+        "Content-Type": "application/json;charset=UTF-8",
+        "Origin": "https://app.dms.cn-np.com",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.27.0; SCO_OREO",
+        "Referer": "https://app.dms.cn-np.com/",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty"
       },
+      body: JSON.stringify({}) // 根据实际需要填写内容
     };
 
     console.log("准备发送签到请求，信息如下：");
     console.log("请求 URL: " + options.url);
     console.log("请求 Headers:");
     console.log(JSON.stringify(options.headers, null, 2));
+    console.log("请求 Body:");
+    console.log(options.body);
 
     $task.fetch(options).then(
       (response) => {
