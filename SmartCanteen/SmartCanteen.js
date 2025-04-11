@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.7
-更新时间：2025-04-10 15:30
+版本号：1.1.8
+更新时间：2025-04-11 10:00
 
 [mitm]
 hostname = cngm.cn-np.com
@@ -92,12 +92,12 @@ if (typeof $request === "undefined") {
           // 如果存在 data 字段，说明有积分信息
           if (data.data && typeof data.data.score !== "undefined") {
             const score = data.data.score;
-            console.log(`智慧食堂签到返回消息: ${msg}，本次获得积分: ${score}`);
-            $notify("智慧食堂签到成功", "", `${msg}，本次获得积分：${score}`);
+            console.log(`智慧食堂签到返回消息: ${msg}，本次获得积分：${score}`);
+            $notify("智慧食堂签到", "", `${msg}，本次获得积分：${score}`);
           } else {
             // 没有 data 字段，仅显示 msg
             console.log("智慧食堂签到返回消息：" + msg);
-            $notify("智慧食堂签到失败", "", msg);
+            $notify("智慧食堂签到", "", msg);
           }
 
         } catch (e) {
