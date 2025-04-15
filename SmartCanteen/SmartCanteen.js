@@ -9,8 +9,8 @@
 
 // 模拟登录
 const tokenKey = "Authorization";
-const usernameKey = "cornex_username";
-const passwordKey = "cornex_password";
+const usernameKey = "cornex.username";
+const passwordKey = "cornex.password";
 
 const username = $prefs.valueForKey(usernameKey);
 const password = $prefs.valueForKey(passwordKey);

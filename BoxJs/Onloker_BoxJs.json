@@ -12,14 +12,14 @@
       "keys": ["@cornex.username", "@cornex.password"],
       "settings": [
         {
-          "id": "@cornex_username",
+          "id": "@cornex.username",
           "name": "DMS账号",
           "val": "",
           "type": "text",
           "desc": "请输入账号"
         },
         {
-          "id": "@cornex_password",
+          "id": "@cornex.password",
           "name": "DMS密码",
           "val": "",
           "type": "text",
