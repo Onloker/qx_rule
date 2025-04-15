@@ -1,4 +1,3 @@
-这是我修改后的，请看看是否正常
 {
   "id": "Onloker.app.sub",
   "name": "Onloker 脚本订阅",
@@ -10,7 +9,7 @@
     {
       "id": "cornex",
       "name": "DMS",
-      "keys": ["@cornex_username", "@cornex_password"],
+      "keys": ["@cornex.username", "@cornex.password"],
       "settings": [
         {
           "id": "@cornex_username",
