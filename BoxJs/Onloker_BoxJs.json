@@ -1,0 +1,28 @@
+{
+    "id": "Onloker.app.sub",
+    "name": "Onloker 脚本订阅",
+    "description": "该订阅仅供学习",
+    "author": "@Onloker",
+    "icon": "https://avatars.githubusercontent.com/u/63253274",
+    "repo": "https://github.com/Onloker/qx_rule",
+    "apps": [
+        {
+            "id": "cornex",
+            "name": "DMS",
+            "keys": [
+               {
+				   "id": "cn_username",
+				   "name": "DMS用户名",
+				   "val": "",
+				   "type": "text"
+			   },
+			   {
+				   "id": "cn_password",
+				   "name": "DMS密码",
+				   "val": "",
+				   "type": "text"
+			   }
+			]
+		}
+	]
+}
