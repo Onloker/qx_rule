@@ -1,7 +1,7 @@
 {
   "id": "Onloker.app.sub",
   "name": "Onloker 脚本订阅",
-  "description": "该订阅仅供学习",
+  "description": "该订阅仅供学习，因登录接口限制，该脚本暂时无作用",
   "author": "@Onloker",
   "icon": "https://avatars.githubusercontent.com/u/63253274",
   "repo": "https://github.com/Onloker/qx_rule",

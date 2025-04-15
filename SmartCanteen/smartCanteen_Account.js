@@ -1,7 +1,9 @@
 /******************************************
 作者：Onloker
-版本号：2.1.0
-更新时间：2025-04-15 15:00
+版本号：1.1.0
+更新时间：2025-04-15 17:00
+脚本说明：该脚本需要配合BoxJs，目前脚本还存在问题，未修复，主要原因为登录接口无法外网访问
+BoxJs脚本地址：https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/BoxJs/Onloker_BoxJs.json
 
 [task_local]
 0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
