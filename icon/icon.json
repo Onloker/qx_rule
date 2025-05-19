@@ -21,6 +21,10 @@
 		{
             "name":"cornex",
             "url":"https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png"
+        },
+		{
+            "name":"Claude",
+            "url":"https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/claude.png"
         }
     ]
 }
