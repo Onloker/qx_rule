@@ -6,7 +6,7 @@
 BoxJs脚本地址：https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/BoxJs/Onloker_BoxJs.json
 
 [task_local]
-0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/SmartCanteen.js, tag=智慧食堂签到, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
+0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Account.js, tag=智慧食堂签到, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
 ******************************************/
 
 // 模拟登录
