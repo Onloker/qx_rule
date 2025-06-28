@@ -1,7 +1,7 @@
 {
   "id": "Onloker.app.sub",
   "name": "Onloker 脚本订阅",
-  "description": "该订阅仅供学习，因登录接口限制，该脚本暂时无作用",
+  "description": "该订阅仅供学习",
   "author": "@Onloker",
   "icon": "https://avatars.githubusercontent.com/u/63253274",
   "repo": "https://github.com/Onloker/qx_rule",
@@ -66,14 +66,14 @@
         {
           "id": "smartCanteen.companyName",
           "name": "公司名称",
-          "val": "",
+          "val": "楚能股份",
           "type": "text",
           "desc": "如：楚能股份"
         },
         {
           "id": "smartCanteen.companyCode",
           "name": "公司编码",
-          "val": "",
+          "val": "HK900000",
           "type": "text",
           "desc": "如：HK900000"
         },
@@ -94,7 +94,7 @@
         {
           "id": "smartCanteen.remark",
           "name": "评价内容",
-          "val": "",
+          "val": "好好好好好好好好好好",
           "type": "text",
           "desc": "建议不少于10字"
         },

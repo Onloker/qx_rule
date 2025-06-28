@@ -1,26 +1,26 @@
 /******************************************
 作者：Onloker
-版本号：1.0.0
-更新时间：2025-6-28 10:30
+版本号：1.0.1
+更新时间：2025-6-28 10:40
 
 [task_local]
 0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
 ******************************************/
 
 // 读取 token
-const token = $persistentStore.read("smartCanteen_token");
+const token = $prefs.valueForKey("smartCanteen_token");
 
 // BoxJs 中读取固定参数
 const fixedFields = {
-  jobCode: $persistentStore.read("smartCanteen.jobCode") || "",
-  userInfoId: $persistentStore.read("smartCanteen.userInfoId") || "",
-  userCodeOrigin: $persistentStore.read("smartCanteen.userCodeOrigin") || "",
-  companyName: $persistentStore.read("smartCanteen.companyName") || "",
-  companyCode: $persistentStore.read("smartCanteen.companyCode") || "",
-  loginUid: $persistentStore.read("smartCanteen.loginUid") || "",
-  userNameOrigin: $persistentStore.read("smartCanteen.userNameOrigin") || "",
-  remark: $persistentStore.read("smartCanteen.remark") || "",
-  score: parseInt($persistentStore.read("smartCanteen.score") || "", 10)
+  jobCode: $prefs.valueForKey("smartCanteen.jobCode") || "",
+  userInfoId: $prefs.valueForKey("smartCanteen.userInfoId") || "",
+  userCodeOrigin: $prefs.valueForKey("smartCanteen.userCodeOrigin") || "",
+  companyName: $prefs.valueForKey("smartCanteen.companyName") || "",
+  companyCode: $prefs.valueForKey("smartCanteen.companyCode") || "",
+  loginUid: $prefs.valueForKey("smartCanteen.loginUid") || "",
+  userNameOrigin: $prefs.valueForKey("smartCanteen.userNameOrigin") || "",
+  remark: $prefs.valueForKey("smartCanteen.remark") || "",
+  score: parseInt($prefs.valueForKey("smartCanteen.score") || "", 10)
 };
 
 // 校验必填项
