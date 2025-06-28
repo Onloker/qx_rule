@@ -1,14 +1,14 @@
 /******************************************
 作者：Onloker
-版本号：1.0.2
-更新时间：2025-6-28 10:50
+版本号：1.0.3
+更新时间：2025-6-28 15:50
 
 [task_local]
 0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
 ******************************************/
 
 // 读取 token
-const token = $prefs.valueForKey("smartCanteen_token");
+const token = $prefs.valueForKey("Authorization");
 console.log("🔑 从本地读取到 token:", token);
 
 // BoxJs 中读取固定参数
