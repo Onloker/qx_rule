@@ -1,17 +1,17 @@
 /******************************************
 作者：Onloker
-版本号：1.1.9
-更新时间：2025-04-15 17:30
+版本号：1.2.0
+更新时间：2025-6-28 10:30
 
 [mitm]
 hostname = cngm.cn-np.com
 
 [rewrite_local]
 # 获取Token
-^https:\/\/cngm\.cn-np\.com/ url script-request-header https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Request.js
+^https:\/\/cngm\.cn-np\.com/ url script-request-header https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Register.js
 
 [task_local]
-0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Request.js, tag=智慧食堂签到, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
+0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Register.js, tag=智慧食堂签到, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
 ******************************************/
 
 // 获取 Token

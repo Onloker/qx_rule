@@ -26,6 +26,86 @@
           "desc": "请输入密码"
         }
       ]
+    },
+    {
+      "id": "smartCanteen",
+      "name": "智慧食堂自动评价",
+      "keys": [
+        "@smartCanteen.jobCode",
+        "@smartCanteen.userInfoId",
+        "@smartCanteen.userCodeOrigin",
+        "@smartCanteen.companyName",
+        "@smartCanteen.companyCode",
+        "@smartCanteen.loginUid",
+        "@smartCanteen.userNameOrigin",
+        "@smartCanteen.remark",
+        "@smartCanteen.score"
+      ],
+      "settings": [
+        {
+          "id": "smartCanteen.jobCode",
+          "name": "岗位编码",
+          "val": "",
+          "type": "text",
+          "desc": "例如：GW-CN-BM01-01"
+        },
+        {
+          "id": "smartCanteen.userInfoId",
+          "name": "用户信息ID",
+          "val": "",
+          "type": "text",
+          "desc": "如：ABCabABCabAB8A8+8ABCDE8AB8abcde8"
+        },
+        {
+          "id": "smartCanteen.userCodeOrigin",
+          "name": "用户编码",
+          "val": "",
+          "type": "text",
+          "desc": "如：88880000088888"
+        },
+        {
+          "id": "smartCanteen.companyName",
+          "name": "公司名称",
+          "val": "",
+          "type": "text",
+          "desc": "如：楚能股份"
+        },
+        {
+          "id": "smartCanteen.companyCode",
+          "name": "公司编码",
+          "val": "",
+          "type": "text",
+          "desc": "如：HK900000"
+        },
+        {
+          "id": "smartCanteen.loginUid",
+          "name": "登录ID",
+          "val": "",
+          "type": "text",
+          "desc": "如：18812341234"
+        },
+        {
+          "id": "smartCanteen.userNameOrigin",
+          "name": "用户名",
+          "val": "",
+          "type": "text",
+          "desc": "如：张三"
+        },
+        {
+          "id": "smartCanteen.remark",
+          "name": "评价内容",
+          "val": "",
+          "type": "text",
+          "desc": "建议不少于10字"
+        },
+        {
+          "id": "smartCanteen.score",
+          "name": "分值",
+          "val": "5",
+          "type": "text",
+          "desc": "范围1~5"
+        }
+      ]
     }
   ]
 }
