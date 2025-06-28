@@ -1,17 +1,15 @@
 /******************************************
 作者：Onloker
-版本号：1.0.3
+版本号：1.0.4
 更新时间：2025-6-28 15:50
 
 [task_local]
 0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
 ******************************************/
 
-// 读取 token
 const token = $prefs.valueForKey("Authorization");
 console.log("🔑 从本地读取到 token:", token);
 
-// BoxJs 中读取固定参数
 const fixedFields = {
   jobCode: $prefs.valueForKey("smartCanteen.jobCode") || "",
   userInfoId: $prefs.valueForKey("smartCanteen.userInfoId") || "",
@@ -21,11 +19,11 @@ const fixedFields = {
   loginUid: $prefs.valueForKey("smartCanteen.loginUid") || "",
   userNameOrigin: $prefs.valueForKey("smartCanteen.userNameOrigin") || "",
   remark: $prefs.valueForKey("smartCanteen.remark") || "",
-  score: parseInt($prefs.valueForKey("smartCanteen.score") || "", 10)
+  score: parseInt($prefs.valueForKey("smartCanteen.score") || "5", 10)
 };
+
 console.log("📦 fixedFields:", JSON.stringify(fixedFields));
 
-// 校验必填项
 const requiredFields = [
   "jobCode", "userInfoId", "userCodeOrigin",
   "companyName", "companyCode", "loginUid",
@@ -46,7 +44,7 @@ async function run() {
   try {
     console.log("🔍 开始获取待评价列表...");
     const tradeIds = await getPendingComments(token);
-    console.log(`📋 共检测到待评价单据: ${tradeIds.length} 条`);
+    console.log(`📋 检测到待评价单据数量: ${tradeIds.length}`);
 
     if (tradeIds.length === 0) {
       $notify("智慧食堂自动评价", "", "暂无待评价单据");
@@ -67,18 +65,13 @@ async function run() {
         }
       }
 
-      console.log(`🎉 评价完成，总数: ${tradeIds.length}, 成功: ${successCount}, 失败: ${failCount}`);
-      $notify(
-        "智慧食堂自动评价完成",
-        "",
-        `总数: ${tradeIds.length}, ✅ 成功: ${successCount}, ❌ 失败: ${failCount}`
-      );
+      console.log(`🎉 总数: ${tradeIds.length}, 成功: ${successCount}, 失败: ${failCount}`);
+      $notify("智慧食堂自动评价完成", "", `总数: ${tradeIds.length}, ✅成功: ${successCount}, ❌失败: ${failCount}`);
     }
   } catch (error) {
     console.log("❗脚本执行出错:", error);
     $notify("智慧食堂自动评价出错", "", String(error));
   }
-
   $done();
 }
 
@@ -93,10 +86,12 @@ async function getPendingComments(token) {
     Referer: "https://app.dms.cn-np.com/"
   };
 
+  console.log("📤 请求待评价列表：", JSON.stringify({ url, headers }));
   const response = await httpGet({ url, headers });
+  console.log("📥 待评价接口返回原始：", response);
   const json = JSON.parse(response);
+  console.log("📋 待评价接口返回 JSON：", JSON.stringify(json));
   const list = json?.data?.data || [];
-  console.log(`📋 待评价列表返回：${JSON.stringify(list)}`);
   return list.map(item => item.tradeId);
 }
 
@@ -111,7 +106,9 @@ async function getCommentInfo(token, tradeId) {
     Referer: "https://app.dms.cn-np.com/"
   };
 
+  console.log("📤 请求评价详情：", JSON.stringify({ url, headers }));
   const response = await httpGet({ url, headers });
+  console.log("📥 详情接口返回原始：", response);
   const json = JSON.parse(response);
   const data = json.data || {};
 
@@ -156,20 +153,19 @@ async function submitComment(token, tradeId, info) {
     groupCodeOrigin: []
   };
 
-  console.log("📦 提交评价数据：", JSON.stringify(body));
+  console.log("📤 提交评价：", JSON.stringify({ url, headers, body }));
   const res = await httpPost({ url, headers, body: JSON.stringify(body) });
+  console.log("📥 提交接口返回原始：", res);
   const json = JSON.parse(res);
-  console.log(`📨 提交评价接口返回: ${JSON.stringify(json)}`);
   if (json.code !== 200) throw new Error(json.msg || "提交评价失败");
 }
 
-// HTTP 封装
+// HTTP
 function httpGet(options) {
   return new Promise((resolve, reject) => {
     $task.fetch(options).then(response => resolve(response.body)).catch(error => reject(error));
   });
 }
-
 function httpPost(options) {
   return new Promise((resolve, reject) => {
     $task.fetch({ ...options, method: "POST" }).then(response => resolve(response.body)).catch(error => reject(error));
