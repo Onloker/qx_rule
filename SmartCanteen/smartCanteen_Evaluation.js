@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.0.5
-更新时间：2025-07-01 16:10
+版本号：1.0.6
+更新时间：2025-07-02 14:00
 
 [task_local]
 0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
@@ -9,10 +9,12 @@
 
 (async () => {
   try {
+    // ✅ 每次运行时只读 token，不在全局声明，不写 token
     const token = $prefs.valueForKey("Authorization");
-    console.log("✅ 动态读到 token: [" + token + "]");
+    console.log("✅ 评价脚本动态读到 token: [" + token + "]");
     $notify("评价脚本读到 token", "", token ? token : "空");
 
+    // BoxJs 中配置的固定参数
     const fixedFields = {
       jobCode: $prefs.valueForKey("smartCanteen.jobCode") || "",
       userInfoId: $prefs.valueForKey("smartCanteen.userInfoId") || "",
@@ -26,6 +28,7 @@
     };
     console.log("📦 fixedFields: " + JSON.stringify(fixedFields));
 
+    // 校验必填
     const missing = Object.entries(fixedFields).filter(([k, v]) => !v).map(([k]) => k);
     if (!token || missing.length > 0) {
       let msg = !token ? "未获取到 token" : "缺失配置: " + missing.join(", ");
@@ -72,7 +75,7 @@ async function run(token, fixedFields) {
 async function getPendingComments(token) {
   const url = "https://smart-area-api.cn-np.com/canteen/comment/myList";
   const headers = {
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,  // 只在 header 加前缀
     Accept: "application/json, text/plain, */*",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1)...",
     Origin: "https://app.dms.cn-np.com",
