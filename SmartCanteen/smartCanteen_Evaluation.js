@@ -7,6 +7,7 @@
 0 10,14,20 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
 ******************************************/
 
+
 (async () => {
   try {
     const token = $prefs.valueForKey("Authorization") || "";
@@ -24,7 +25,7 @@
       remark: $prefs.valueForKey("smartCanteen.remark") || "",
       score: parseInt($prefs.valueForKey("smartCanteen.score") || "5", 10)
     };
-    console.log("📦 fixedFields:", JSON.stringify(fixedFields));
+    console.log("📦 fixedFields 内容: " + JSON.stringify(fixedFields));
 
     const missing = Object.entries(fixedFields).filter(([k, v]) => !v).map(([k]) => k);
     if (!token || missing.length > 0) {
@@ -36,7 +37,7 @@
 
     await run(token, fixedFields);
   } catch (err) {
-    console.log("❗ 脚本异常:", err);
+    console.log("❗ 脚本异常: " + err);
     $notify("智慧食堂脚本异常", "", String(err));
   }
   $done();
@@ -52,17 +53,16 @@ async function run(token, fixedFields) {
   }
 
   let success = 0, fail = 0, totalScore = 0;
-  let successList = [];  // 每条成功记录
-  let failList = [];     // 每条失败记录
+  let successList = [];
+  let failList = [];
 
   for (const tradeId of tradeIds) {
-    console.log(`➡️ 开始处理 tradeId: ${tradeId}`);
+    console.log(`\n➡️ 开始处理 tradeId: ${tradeId}`);
 
     try {
       const info = await getCommentInfo(token, tradeId);
-      console.log(`✅ 获取详情成功 tradeId:${tradeId}:`, JSON.stringify(info));
+      console.log(`✅ 获取详情成功 tradeId:${tradeId}: ` + JSON.stringify(info));
 
-      // 提交评价
       const submitHeaders = {
         Authorization: token,
         "Content-Type": "application/json"
@@ -91,30 +91,30 @@ async function run(token, fixedFields) {
         groupCodeOrigin: []
       };
 
-      console.log(`📤 提交评价 tradeId:${tradeId} headers:`, JSON.stringify(submitHeaders));
-      console.log(`📦 提交评价 body:`, JSON.stringify(submitBody));
+      console.log(`📤 提交评价 tradeId:${tradeId} headers: ` + JSON.stringify(submitHeaders));
+      console.log(`📦 提交评价 body tradeId:${tradeId}: ` + JSON.stringify(submitBody));
 
       const submitRes = await httpPost({
         url: "https://smart-area-api.cn-np.com/canteen/comment/submit",
         headers: submitHeaders,
         body: JSON.stringify(submitBody)
       });
-      console.log(`📥 提交评价返回 tradeId:${tradeId}:`, submitRes);
+      console.log(`📥 提交评价返回 tradeId:${tradeId}: ` + submitRes);
 
       const submitJson = JSON.parse(submitRes);
       if (submitJson.code !== 200) throw new Error(submitJson.msg || "提交失败");
 
       console.log(`✅ 提交评价成功 tradeId:${tradeId}`);
 
-      // 再次获取得分
+      // 再获取得分
       const scoreInfo = await getScoreAfterComment(token, tradeId);
-      console.log(`🎉 获取得分成功 tradeId:${tradeId}:`, JSON.stringify(scoreInfo));
+      console.log(`🎉 获取得分成功 tradeId:${tradeId}: ` + JSON.stringify(scoreInfo));
 
       success++;
       totalScore += scoreInfo.total;
       successList.push({ tradeId, ...scoreInfo });
     } catch (e) {
-      console.log(`❌ 单据 tradeId:${tradeId} 异常:`, e);
+      console.log(`❌ tradeId:${tradeId} 异常: ` + e);
       fail++;
       failList.push({ tradeId, error: String(e) });
     }
@@ -124,7 +124,7 @@ async function run(token, fixedFields) {
     `ID:${s.tradeId}, 得分=${s.scoreing_value}+${s.comment_scoreing_value}=${s.total}`
   ).join("\n");
 
-  let msg = `总共: ${tradeIds.length} 条\n✅成功: ${success} 条，总得分: ${totalScore}\n❌失败: ${fail} 条`;
+  let msg = `总数: ${tradeIds.length}\n✅成功: ${success} 条，总得分: ${totalScore}\n❌失败: ${fail} 条`;
   if (detailMsg) msg += `\n---\n${detailMsg}`;
   if (failList.length > 0) {
     msg += `\n---\n异常详情:\n` + failList.map(f => `ID:${f.tradeId}, 错误:${f.error}`).join("\n");
@@ -142,11 +142,11 @@ async function getPendingComments(token) {
     Origin: "https://app.dms.cn-np.com",
     Referer: "https://app.dms.cn-np.com/"
   };
-  console.log("📤 请求待评价列表 headers:", JSON.stringify(headers));
+  console.log("📤 请求待评价列表 headers: " + JSON.stringify(headers));
   const res = await httpGet({ url, headers });
-  console.log("📥 返回原始:", res);
+  console.log("📥 返回原始: " + res);
   const json = JSON.parse(res);
-  console.log("📋 返回 JSON:", JSON.stringify(json));
+  console.log("📋 返回 JSON: " + JSON.stringify(json));
   return json?.data?.data?.map(x => x.tradeId) || [];
 }
 
@@ -159,9 +159,9 @@ async function getCommentInfo(token, tradeId) {
     Origin: "https://app.dms.cn-np.com",
     Referer: "https://app.dms.cn-np.com/"
   };
-  console.log(`📤 获取详情 tradeId:${tradeId} headers:`, JSON.stringify(headers));
+  console.log(`📤 获取详情 tradeId:${tradeId} headers: ` + JSON.stringify(headers));
   const res = await httpGet({ url, headers });
-  console.log(`📥 获取详情返回 tradeId:${tradeId}:`, res);
+  console.log(`📥 获取详情返回 tradeId:${tradeId}: ` + res);
   const data = JSON.parse(res).data || {};
   return {
     meal_time: data.meal_time || "",
@@ -181,18 +181,14 @@ async function getScoreAfterComment(token, tradeId) {
     Origin: "https://app.dms.cn-np.com",
     Referer: "https://app.dms.cn-np.com/"
   };
-  console.log(`📤 再次获取得分 tradeId:${tradeId} headers:`, JSON.stringify(headers));
+  console.log(`📤 再次获取得分 tradeId:${tradeId} headers: ` + JSON.stringify(headers));
   const res = await httpGet({ url, headers });
-  console.log(`📥 得分返回 tradeId:${tradeId}:`, res);
+  console.log(`📥 得分返回 tradeId:${tradeId}: ` + res);
   const data = JSON.parse(res)?.data || {};
   const scoreing = parseInt(data.comment?.scoreing_value || "0", 10);
   const commentScoreing = parseInt(data.comment?.comment_scoreing_value || "0", 10);
   const total = scoreing + commentScoreing;
-  return {
-    scoreing_value: scoreing,
-    comment_scoreing_value: commentScoreing,
-    total
-  };
+  return { scoreing_value: scoreing, comment_scoreing_value: commentScoreing, total };
 }
 
 function httpGet(options) {
