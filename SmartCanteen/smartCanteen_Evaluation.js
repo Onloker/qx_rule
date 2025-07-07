@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.1
-更新时间：2025-07-07 10:15
+版本号：1.1.2
+更新时间：2025-07-07 15:30
 
 [task_local]
 0 10,14,20 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
@@ -28,7 +28,7 @@
       remark: $prefs.valueForKey("smartCanteen.remark") || "",
       score: parseInt($prefs.valueForKey("smartCanteen.score") || "5", 10)
     };
-    console.log("📦 BoxJs 内容:\n" + JSON.stringify(fixedFields, null, 2));
+    console.log("📦 BoxJs 配置:\n" + JSON.stringify(fixedFields, null, 2));
 
     const missing = Object.entries(fixedFields).filter(([k, v]) => !v).map(([k]) => k);
     if (missing.length > 0) {
@@ -46,54 +46,7 @@
 
 async function run(token, fixedFields) {
   console.log("🔍 开始获取待评价列表...");
-
-  const listHeaders = {
-    Host: "smart-area-api.cn-np.com",
-    Authorization: token,
-    Sec-Fetch-Site: "same-site",
-    Accept-Language: "zh-CN,zh-Hans;q=0.9",
-    Accept-Encoding: "gzip, deflate, br",
-    Sec-Fetch-Mode: "cors",
-    Accept: "application/json, text/plain, */*",
-    Origin: "https://app.dms.cn-np.com",
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
-    Connection: "keep-alive",
-    Referer: "https://app.dms.cn-np.com/",
-    Sec-Fetch-Dest: "empty"
-  };
-
-  const getInfoHeaders = {
-    Host: "smart-area-api.cn-np.com",
-    Authorization: token,
-    Sec-Fetch-Site: "same-site",
-    Accept-Language: "zh-CN,zh-Hans;q=0.9",
-    Accept-Encoding: "gzip, deflate, br",
-    Sec-Fetch-Mode: "cors",
-    Accept: "application/json, text/plain, */*",
-    Origin: "https://app.dms.cn-np.com",
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
-    Connection: "keep-alive",
-    Referer: "https://app.dms.cn-np.com/",
-    Sec-Fetch-Dest: "empty"
-  };
-
-  const submitHeaders = {
-    Host: "smart-area-api.cn-np.com",
-    Accept: "application/json, text/plain, */*",
-    Authorization: token,
-    Sec-Fetch-Site: "same-site",
-    Accept-Language: "zh-CN,zh-Hans;q=0.9",
-    Accept-Encoding: "gzip, deflate, br",
-    Sec-Fetch-Mode: "cors",
-    "Content-Type": "application/json;charset=UTF-8",
-    Origin: "https://app.dms.cn-np.com",
-    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
-    Referer: "https://app.dms.cn-np.com/",
-    Connection: "keep-alive",
-    Sec-Fetch-Dest: "empty"
-  };
-
-  const tradeIds = await getPendingComments(listHeaders);
+  const tradeIds = await getPendingComments(token);
   console.log(`📋 待评价数量: ${tradeIds.length}`);
 
   if (tradeIds.length === 0) {
@@ -101,15 +54,13 @@ async function run(token, fixedFields) {
   }
 
   let success = 0, fail = 0, totalScore = 0;
-  let successList = [];
   let failList = [];
 
   for (const tradeId of tradeIds) {
     console.log(`\n----------------------------`);
     console.log(`\n➡️ 开始处理 tradeId: ${tradeId}`);
-
     try {
-      const info = await getCommentInfo(getInfoHeaders, tradeId);
+      const info = await getCommentInfo(token, tradeId);
       console.log(`✅ 获取详情成功 tradeId:${tradeId}:\n` + JSON.stringify(info, null, 2));
 
       const submitBody = {
@@ -136,6 +87,15 @@ async function run(token, fixedFields) {
         groupCodeOrigin: []
       };
 
+      const submitHeaders = {
+        Accept: "application/json, text/plain, */*",
+        Authorization: token,
+        "Content-Type": "application/json;charset=UTF-8",
+        Origin: "https://app.dms.cn-np.com",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
+        Referer: "https://app.dms.cn-np.com/",
+      };
+
       console.log(`📤 提交评价 headers:\n` + JSON.stringify(submitHeaders, null, 2));
       console.log(`📦 提交评价 body:\n` + JSON.stringify(submitBody, null, 2));
 
@@ -149,9 +109,7 @@ async function run(token, fixedFields) {
       const submitJson = JSON.parse(submitRes);
       if (submitJson.code !== 200) throw new Error(submitJson.msg || "提交失败");
 
-      console.log(`✅ 提交评价成功 tradeId:${tradeId}`);
-
-      const scoreInfo = await getScoreAfterComment(getInfoHeaders, tradeId);
+      const scoreInfo = await getScoreAfterComment(token, tradeId);
       console.log(`🎉 获取得分成功 tradeId:${tradeId}:\n` + JSON.stringify(scoreInfo, null, 2));
 
       success++;
@@ -160,29 +118,44 @@ async function run(token, fixedFields) {
       console.log(`❌ tradeId:${tradeId} 异常:\n` + String(e));
       fail++;
       failList.push({ tradeId, error: String(e) });
-      $notify("智慧食堂评价异常", "❗异常", `ID:${tradeId}, 错误:${e}`);
+      $notify("智慧食堂评价", "❗异常", `ID:${tradeId}, 错误:${e}`);
     }
   }
 
-  let msg = `✅成功：${success} 条\n❌失败：${fail} 条\n🏆得分：${totalScore}`;
+  let msg = `成功：${success}，失败：${fail}，总得分：${totalScore}`;
   if (failList.length > 0) {
     msg += `\n---\n异常详情:\n` + failList.map(f => `ID:${f.tradeId}, 错误:${f.error}`).join("\n");
   }
   $notify("智慧食堂评价", "", msg);
 }
 
-async function getPendingComments(headers) {
+async function getPendingComments(token) {
   const url = "https://smart-area-api.cn-np.com/canteen/comment/myList";
+  const headers = {
+    Authorization: token,
+    Accept: "application/json, text/plain, */*",
+    Origin: "https://app.dms.cn-np.com",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
+    Connection: "keep-alive",
+    Referer: "https://app.dms.cn-np.com/",
+  };
   console.log("📤 请求待评价列表 headers:\n" + JSON.stringify(headers, null, 2));
   const res = await httpGet({ url, headers });
   console.log("📥 返回原始:\n" + formatJsonString(res));
   const json = JSON.parse(res);
-  console.log("📋 返回 JSON:\n" + JSON.stringify(json, null, 2));
   return json?.data?.data?.map(x => x.tradeId) || [];
 }
 
-async function getCommentInfo(headers, tradeId) {
+async function getCommentInfo(token, tradeId) {
   const url = `https://smart-area-api.cn-np.com/canteen/comment/getFoods?trade_id=${tradeId}`;
+  const headers = {
+    Authorization: token,
+    Accept: "application/json, text/plain, */*",
+    Origin: "https://app.dms.cn-np.com",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
+    Connection: "keep-alive",
+    Referer: "https://app.dms.cn-np.com/",
+  };
   console.log(`📤 获取详情 tradeId:${tradeId} headers:\n` + JSON.stringify(headers, null, 2));
   const res = await httpGet({ url, headers });
   console.log(`📥 获取详情返回 tradeId:${tradeId}:\n` + formatJsonString(res));
@@ -196,8 +169,16 @@ async function getCommentInfo(headers, tradeId) {
   };
 }
 
-async function getScoreAfterComment(headers, tradeId) {
+async function getScoreAfterComment(token, tradeId) {
   const url = `https://smart-area-api.cn-np.com/canteen/comment/getFoods?trade_id=${tradeId}`;
+  const headers = {
+    Authorization: token,
+    Accept: "application/json, text/plain, */*",
+    Origin: "https://app.dms.cn-np.com",
+    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
+    Connection: "keep-alive",
+    Referer: "https://app.dms.cn-np.com/",
+  };
   console.log(`📤 再次获取得分 tradeId:${tradeId} headers:\n` + JSON.stringify(headers, null, 2));
   const res = await httpGet({ url, headers });
   console.log(`📥 得分返回 tradeId:${tradeId}:\n` + formatJsonString(res));

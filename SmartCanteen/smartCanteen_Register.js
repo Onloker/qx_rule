@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.2.0
-更新时间：2025-6-28 10:30
+版本号：1.2.1
+更新时间：2025-07-07 15:30
 
 [mitm]
 hostname = cngm.cn-np.com
@@ -56,19 +56,12 @@ if (typeof $request === "undefined") {
       url: signUrl,
       method: "POST",
       headers: {
-        "Host": "smart-area-api.cn-np.com",
         "Accept": "application/json, text/plain, */*",
         "Authorization": authorization,
-        "Sec-Fetch-Site": "same-site",
-        "Accept-Language": "zh-CN,zh-Hans;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Sec-Fetch-Mode": "cors",
         "Content-Type": "application/json;charset=UTF-8",
         "Origin": "https://app.dms.cn-np.com",
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.27.0; SCO_OREO",
         "Referer": "https://app.dms.cn-np.com/",
-        "Connection": "keep-alive",
-        "Sec-Fetch-Dest": "empty"
       },
       body: JSON.stringify({}) // 根据实际需要填写内容
     };
