@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.0.9
-更新时间：2025-07-07 08:40
+版本号：1.1.0
+更新时间：2025-07-07 09:00
 
 [task_local]
 0 10,14,20 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
@@ -11,7 +11,11 @@
   try {
     const token = $prefs.valueForKey("Authorization") || "";
     console.log("✅ 读取到 token: [" + token + "]");
-    $notify("评价脚本读到 token", "", token ? token : "空");
+
+    if (!token) {
+      $notify("智慧食堂自动评价失败", "", "❗未获取到 token");
+      return $done();
+    }
 
     const fixedFields = {
       jobCode: $prefs.valueForKey("smartCanteen.jobCode") || "",
@@ -27,10 +31,8 @@
     console.log("📦 fixedFields 内容:\n" + JSON.stringify(fixedFields, null, 2));
 
     const missing = Object.entries(fixedFields).filter(([k, v]) => !v).map(([k]) => k);
-    if (!token || missing.length > 0) {
-      let msg = !token ? "未获取到 token" : "缺失配置: " + missing.join(", ");
-      console.log("❗ " + msg);
-      $notify("智慧食堂自动评价失败", "", msg);
+    if (missing.length > 0) {
+      $notify("智慧食堂自动评价失败", "", "❗缺失配置: " + missing.join(", "));
       return $done();
     }
 
@@ -48,7 +50,7 @@ async function run(token, fixedFields) {
   console.log(`📋 待评价单据数量: ${tradeIds.length}`);
 
   if (tradeIds.length === 0) {
-    return $notify("智慧食堂自动评价", "", "暂无待评价单据");
+    return $notify("智慧食堂自动评价", "副标题", "暂无待评价单据");
   }
 
   let success = 0, fail = 0, totalScore = 0;
@@ -91,15 +93,15 @@ async function run(token, fixedFields) {
         groupCodeOrigin: []
       };
 
-      console.log(`📤 提交评价 headers tradeId:${tradeId}:\n` + JSON.stringify(submitHeaders, null, 2));
-      console.log(`📦 提交评价 body tradeId:${tradeId}:\n` + JSON.stringify(submitBody, null, 2));
+      console.log(`📤 提交评价 headers:\n` + JSON.stringify(submitHeaders, null, 2));
+      console.log(`📦 提交评价 body:\n` + JSON.stringify(submitBody, null, 2));
 
       const submitRes = await httpPost({
         url: "https://smart-area-api.cn-np.com/canteen/comment/submit",
         headers: submitHeaders,
         body: JSON.stringify(submitBody)
       });
-      console.log(`📥 提交评价返回 tradeId:${tradeId}:\n` + formatJsonString(submitRes));
+      console.log(`📥 提交评价返回:\n` + formatJsonString(submitRes));
 
       const submitJson = JSON.parse(submitRes);
       if (submitJson.code !== 200) throw new Error(submitJson.msg || "提交失败");
@@ -116,19 +118,11 @@ async function run(token, fixedFields) {
       console.log(`❌ tradeId:${tradeId} 异常:\n` + String(e));
       fail++;
       failList.push({ tradeId, error: String(e) });
+      $notify("智慧食堂自动评价单据异常", "", `ID:${tradeId}, 错误:${e}`);
     }
   }
 
-  let detailMsg = successList.map(s =>
-    `ID:${s.tradeId}, 得分=${s.scoreing_value}+${s.comment_scoreing_value}=${s.total}`
-  ).join("\n");
-
-  let msg = `总数: ${tradeIds.length}\n✅成功: ${success} 条，总得分: ${totalScore}\n❌失败: ${fail} 条`;
-  if (detailMsg) msg += `\n---\n${detailMsg}`;
-  if (failList.length > 0) {
-    msg += `\n---\n异常详情:\n` + failList.map(f => `ID:${f.tradeId}, 错误:${f.error}`).join("\n");
-  }
-
+  let msg = `总成功：${success}，总失败：${fail}，总得分：${totalScore}`;
   $notify("智慧食堂自动评价完成", "", msg);
 }
 
