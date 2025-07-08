@@ -61,7 +61,7 @@ if (typeof $request === "undefined") {
         "Content-Type": "application/json;charset=UTF-8",
         "Origin": "https://app.dms.cn-np.com",
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.27.0; SCO_OREO",
-        "Referer": "https://app.dms.cn-np.com/",
+        "Referer": "https://app.dms.cn-np.com/"
       },
       body: JSON.stringify({}) // 根据实际需要填写内容
     };

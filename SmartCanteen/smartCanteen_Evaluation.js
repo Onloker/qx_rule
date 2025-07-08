@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.2
-更新时间：2025-07-07 15:30
+版本号：1.1.3
+更新时间：2025-07-08 12:15
 
 [task_local]
 0 10,14,20 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
@@ -26,7 +26,7 @@
       loginUid: $prefs.valueForKey("smartCanteen.loginUid") || "",
       userNameOrigin: $prefs.valueForKey("smartCanteen.userNameOrigin") || "",
       remark: $prefs.valueForKey("smartCanteen.remark") || "",
-      score: parseInt($prefs.valueForKey("smartCanteen.score") || "5", 10)
+      score: parseInt($prefs.valueForKey("smartCanteen.score") || "", 10)
     };
     console.log("📦 BoxJs 配置:\n" + JSON.stringify(fixedFields, null, 2));
 
@@ -58,7 +58,7 @@ async function run(token, fixedFields) {
 
   for (const tradeId of tradeIds) {
     console.log(`\n----------------------------`);
-    console.log(`\n➡️ 开始处理 tradeId: ${tradeId}`);
+    console.log(`➡️ 开始处理 tradeId: ${tradeId}`);
     try {
       const info = await getCommentInfo(token, tradeId);
       console.log(`✅ 获取详情成功 tradeId:${tradeId}:\n` + JSON.stringify(info, null, 2));
@@ -93,7 +93,7 @@ async function run(token, fixedFields) {
         "Content-Type": "application/json;charset=UTF-8",
         Origin: "https://app.dms.cn-np.com",
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
-        Referer: "https://app.dms.cn-np.com/",
+        Referer: "https://app.dms.cn-np.com/"
       };
 
       console.log(`📤 提交评价 headers:\n` + JSON.stringify(submitHeaders, null, 2));
@@ -109,8 +109,10 @@ async function run(token, fixedFields) {
       const submitJson = JSON.parse(submitRes);
       if (submitJson.code !== 200) throw new Error(submitJson.msg || "提交失败");
 
+      console.log(`✅ 提交评价成功 tradeId:${tradeId}`);
+
       const scoreInfo = await getScoreAfterComment(token, tradeId);
-      console.log(`🎉 获取得分成功 tradeId:${tradeId}:\n` + JSON.stringify(scoreInfo, null, 2));
+      console.log(`🎉 获取积分成功 tradeId:${tradeId}:\n` + JSON.stringify(scoreInfo, null, 2));
 
       success++;
       totalScore += scoreInfo.total;
@@ -122,7 +124,7 @@ async function run(token, fixedFields) {
     }
   }
 
-  let msg = `成功：${success}，失败：${fail}，总得分：${totalScore}`;
+  let msg = `成功：${success}，失败：${fail}，积分：${totalScore}`;
   if (failList.length > 0) {
     msg += `\n---\n异常详情:\n` + failList.map(f => `ID:${f.tradeId}, 错误:${f.error}`).join("\n");
   }
@@ -137,12 +139,16 @@ async function getPendingComments(token) {
     Origin: "https://app.dms.cn-np.com",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
     Connection: "keep-alive",
-    Referer: "https://app.dms.cn-np.com/",
+    Referer: "https://app.dms.cn-np.com/"
   };
   console.log("📤 请求待评价列表 headers:\n" + JSON.stringify(headers, null, 2));
   const res = await httpGet({ url, headers });
   console.log("📥 返回原始:\n" + formatJsonString(res));
+
   const json = JSON.parse(res);
+  if (json.code !== 200) {
+    throw new Error(`获取待评价列表失败：${json.msg || '未知错误'}`);
+  }
   return json?.data?.data?.map(x => x.tradeId) || [];
 }
 
@@ -154,7 +160,7 @@ async function getCommentInfo(token, tradeId) {
     Origin: "https://app.dms.cn-np.com",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
     Connection: "keep-alive",
-    Referer: "https://app.dms.cn-np.com/",
+    Referer: "https://app.dms.cn-np.com/"
   };
   console.log(`📤 获取详情 tradeId:${tradeId} headers:\n` + JSON.stringify(headers, null, 2));
   const res = await httpGet({ url, headers });
@@ -177,11 +183,11 @@ async function getScoreAfterComment(token, tradeId) {
     Origin: "https://app.dms.cn-np.com",
     "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
     Connection: "keep-alive",
-    Referer: "https://app.dms.cn-np.com/",
+    Referer: "https://app.dms.cn-np.com/"
   };
-  console.log(`📤 再次获取得分 tradeId:${tradeId} headers:\n` + JSON.stringify(headers, null, 2));
+  console.log(`📤 再次获取积分 tradeId:${tradeId} headers:\n` + JSON.stringify(headers, null, 2));
   const res = await httpGet({ url, headers });
-  console.log(`📥 得分返回 tradeId:${tradeId}:\n` + formatJsonString(res));
+  console.log(`📥 积分返回 tradeId:${tradeId}:\n` + formatJsonString(res));
   const data = JSON.parse(res)?.data || {};
   const scoreing = parseInt(data.comment?.scoreing_value || "0", 10);
   const commentScoreing = parseInt(data.comment?.comment_scoreing_value || "0", 10);
