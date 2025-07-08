@@ -124,7 +124,7 @@ async function run(token, fixedFields) {
     }
   }
 
-  let msg = `成功：${success}，失败：${fail}，积分：${totalScore}`;
+  let msg = `成功:${success}，失败:${fail}，积分:${totalScore}`;
   if (failList.length > 0) {
     msg += `\n---\n异常详情:\n` + failList.map(f => `ID:${f.tradeId}, 错误:${f.error}`).join("\n");
   }
@@ -147,7 +147,7 @@ async function getPendingComments(token) {
 
   const json = JSON.parse(res);
   if (json.code !== 200) {
-    throw new Error(`获取待评价列表失败：${json.msg || '未知错误'}`);
+    throw new Error(`获取待评价列表失败:${json.msg || '未知错误'}`);
   }
   return json?.data?.data?.map(x => x.tradeId) || [];
 }
