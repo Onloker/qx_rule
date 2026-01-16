@@ -9,7 +9,29 @@
     {
       "id": "cornex",
       "name": "DMS",
-      "keys": ["@cornex.username", "@cornex.password"],
+      "keys": [
+        "@cornex.username",
+        "@cornex.password",
+        "@cornex.url",
+        "@cornex.urlControl",
+        "@cornex.systemId",
+        "@cornex.businessEnvironment",
+        "@cornex.requestTokenType",
+        "@cornex.acceptLanguage",
+        "@cornex.appKey",
+        "@cornex.appVersion",
+        "@cornex.confSystem",
+        "@cornex.secretKey",
+        "@cornex.md5Key",
+        "@cornex.iv",
+        "@cornex.deviceType",
+        "@cornex.imDeviceType",
+        "@cornex.deviceName",
+        "@cornex.deviceModel",
+        "@cornex.deviceNo",
+        "@cornex.mac",
+        "@cornex.ips"
+      ],
       "settings": [
         {
           "id": "cornex.username",
@@ -24,6 +46,139 @@
           "val": "",
           "type": "text",
           "desc": "请输入密码"
+        },
+        {
+          "id": "cornex.url",
+          "name": "登录网关地址",
+          "val": "https://cngm.cn-np.com",
+          "type": "text",
+          "desc": "示例：https://cngm.cn-np.com"
+        },
+        {
+          "id": "cornex.urlControl",
+          "name": "网关路由路径",
+          "val": "/sso/sso/getTicket.do",
+          "type": "text",
+          "desc": "示例：/sso/sso/getTicket.do"
+        },
+        {
+          "id": "cornex.systemId",
+          "name": "系统ID",
+          "val": "100080",
+          "type": "text",
+          "desc": "示例：100080"
+        },
+        {
+          "id": "cornex.businessEnvironment",
+          "name": "环境",
+          "val": "release",
+          "type": "text",
+          "desc": "示例：release"
+        },
+        {
+          "id": "cornex.requestTokenType",
+          "name": "请求头 TokenType",
+          "val": "ST1",
+          "type": "text",
+          "desc": "对应X-CnGm-Token-Type"
+        },
+        {
+          "id": "cornex.acceptLanguage",
+          "name": "请求头语言",
+          "val": "zh",
+          "type": "text",
+          "desc": "对应Accept-Language"
+        },
+        {
+          "id": "cornex.appKey",
+          "name": "AppKey",
+          "val": "7adbe5e0-eb1b-11ee-a417-e55e300151f5",
+          "type": "text",
+          "desc": "默认值即可"
+        },
+        {
+          "id": "cornex.appVersion",
+          "name": "App版本",
+          "val": "1.3.79",
+          "type": "text",
+          "desc": "Windows:1.3.79/2026-01-09 09:14:11"
+        },
+        {
+          "id": "cornex.confSystem",
+          "name": "confSystem",
+          "val": "S1",
+          "type": "text",
+          "desc": "默认值即可"
+        },
+        {
+          "id": "cornex.secretKey",
+          "name": "3DES密钥 secretKey",
+          "val": "my.oschina.net/penngo?#@",
+          "type": "text",
+          "desc": "默认值即可"
+        },
+        {
+          "id": "cornex.md5Key",
+          "name": "签名密钥 md5Key",
+          "val": "a$%$^#w12341@#@1-03@ffs3",
+          "type": "text",
+          "desc": "默认值即可"
+        },
+        {
+          "id": "cornex.iv",
+          "name": "3DES IV",
+          "val": "01234567",
+          "type": "text",
+          "desc": "默认值即可"
+        },
+        {
+          "id": "cornex.deviceType",
+          "name": "设备类型 deviceType",
+          "val": "Windows",
+          "type": "text",
+          "desc": "示例：Windows/Mac"
+        },
+        {
+          "id": "cornex.imDeviceType",
+          "name": "IM设备类型 imDeviceType",
+          "val": "pc",
+          "type": "text",
+          "desc": "默认 pc"
+        },
+        {
+          "id": "cornex.deviceName",
+          "name": "设备名称 deviceName",
+          "val": "",
+          "type": "text",
+          "desc": "可留空，脚本会自动生成"
+        },
+        {
+          "id": "cornex.deviceModel",
+          "name": "设备型号 deviceModel",
+          "val": "Windows10",
+          "type": "text",
+          "desc": "示例：Windows10"
+        },
+        {
+          "id": "cornex.deviceNo",
+          "name": "设备号 deviceNo",
+          "val": "",
+          "type": "text",
+          "desc": "可留空，脚本会自动生成"
+        },
+        {
+          "id": "cornex.mac",
+          "name": "MAC地址",
+          "val": "00:00:00:00:00:00",
+          "type": "text",
+          "desc": "示例：00:11:22:33:44:55"
+        },
+        {
+          "id": "cornex.ips",
+          "name": "IP地址列表",
+          "val": "127.0.0.1",
+          "type": "text",
+          "desc": "多个用逗号分隔：1.1.1.1,2.2.2.2"
         }
       ]
     },
