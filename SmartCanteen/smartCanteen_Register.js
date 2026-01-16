@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.2.2
-更新时间：2026-01-16 16:50:00
+版本号：1.2.3
+更新时间：2026-01-16 17:15:00
 
 [task_local]
 0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Register.js, tag=智慧食堂签到, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
@@ -16,17 +16,20 @@ const CRYPTOJS_CACHE_KEY = "cornex.cryptojs";
 
 (async () => {
   try {
+    console.log("⏱️ 开始执行智慧食堂签到...");
     const authorization = await getAuthorization();
     const result = await signInWithRetry(authorization);
     const msg = result?.msg || "未知返回";
     const score = result?.data?.score;
+    console.log("✅ 签到完成:\n" + formatJsonString(JSON.stringify(result)));
     if (typeof score !== "undefined") {
       $notify("智慧食堂签到", "", `${msg}，本次获得积分：${score}`);
     } else {
       $notify("智慧食堂签到", "", msg);
     }
   } catch (e) {
-    $notify("智慧食堂签到失败", "", String(e));
+    console.log("❗ 脚本异常:\n" + String(e));
+    $notify("智慧食堂签到", "❗异常", String(e));
   } finally {
     $done();
   }
@@ -38,6 +41,7 @@ async function signInWithRetry(authorization) {
   } catch (e) {
     if (!e || !e.authInvalid) throw e;
   }
+  console.log("🔄 Authorization 失效，清空缓存并重新登录后重试...");
   clearAuthorization();
   const refreshed = await getAuthorization({ forceRefresh: true });
   return await signIn(refreshed);
@@ -58,9 +62,12 @@ async function signIn(authorization) {
     },
     body: JSON.stringify({})
   };
+  console.log("📤 请求签到 headers:\n" + JSON.stringify(sanitizeHeaders(options.headers), null, 2));
+  console.log("📦 请求签到 body:\n" + JSON.stringify({}, null, 2));
   const response = await $task.fetch(options);
   const statusCode = response?.statusCode || 0;
   const bodyText = response?.body || "";
+  console.log(`📥 签到返回 status:${statusCode}:\n` + formatJsonString(bodyText));
   if (looksLikeAuthInvalid(statusCode, bodyText)) {
     const err = new Error("Authorization 无效");
     err.authInvalid = true;
@@ -81,13 +88,29 @@ async function getAuthorization(opts) {
   const skewMs = 5 * 60 * 1000;
 
   if (!forceRefresh && cached && expiresAt && now + skewMs < expiresAt) {
+    const leftMin = Math.floor((expiresAt - now) / 60000);
+    console.log(`🔑 使用缓存 Authorization（剩余约 ${leftMin} 分钟）`);
     return cached;
   }
   if (!forceRefresh && cached && !expiresAt) {
+    console.log("🔑 使用缓存 Authorization（未记录 expiresAt）");
     return cached;
   }
 
+  if (forceRefresh) {
+    console.log("🔄 强制刷新 Authorization，开始重新登录...");
+  } else if (cached) {
+    console.log("⏳ Authorization 即将过期或已过期，开始重新登录...");
+  } else {
+    console.log("🔐 未发现缓存 Authorization，开始登录...");
+  }
   const loginRes = await loginAndCache();
+  if (loginRes && loginRes.expiresAt) {
+    const leftMin = Math.floor((loginRes.expiresAt - Date.now()) / 60000);
+    console.log(`✅ 获取新 Authorization 成功（有效期约 ${leftMin} 分钟）`);
+  } else {
+    console.log("✅ 获取新 Authorization 成功");
+  }
   return loginRes.authorization;
 }
 
@@ -306,6 +329,20 @@ function safeJsonParse(text) {
   } catch (_) {
     return null;
   }
+}
+
+function formatJsonString(str) {
+  try {
+    return JSON.stringify(JSON.parse(str), null, 2);
+  } catch (_) {
+    return str;
+  }
+}
+
+function sanitizeHeaders(headers) {
+  const out = { ...(headers || {}) };
+  if (out.Authorization) out.Authorization = "***";
+  return out;
 }
 
 function formEncode(params) {

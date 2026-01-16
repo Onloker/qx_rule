@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.4
-更新时间：2026-01-16 16:50:00
+版本号：1.1.5
+更新时间：2026-01-16 17:15:00
 
 [task_local]
 0 10,14,20 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
@@ -54,6 +54,7 @@ async function run(fixedFields) {
 
   let success = 0, fail = 0, totalScore = 0;
   let failList = [];
+  let successList = [];
 
   for (const tradeId of tradeIds) {
     console.log(`\n----------------------------`);
@@ -114,6 +115,7 @@ async function run(fixedFields) {
 
       success++;
       totalScore += scoreInfo.total;
+      successList.push({ tradeId, info, scoreInfo, commentScore: fixedFields.score });
     } catch (e) {
       console.log(`❌ tradeId:${tradeId} 异常:\n` + String(e));
       fail++;
@@ -121,6 +123,22 @@ async function run(fixedFields) {
       $notify("智慧食堂评价", "❗异常", `ID:${tradeId}, 错误:${e}`);
     }
   }
+
+  console.log(
+    "📊 本次评价汇总:\n" +
+      JSON.stringify(
+        {
+          total: tradeIds.length,
+          success,
+          fail,
+          totalScore,
+          successList,
+          failList
+        },
+        null,
+        2
+      )
+  );
 
   let msg = `成功:${success}，失败:${fail}，积分:${totalScore}`;
   if (failList.length > 0) {
