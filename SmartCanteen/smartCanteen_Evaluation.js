@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.1.6
-更新时间：2026-01-19 15:30:00
+版本号：1.1.7
+更新时间：2026-01-19 16:30:00
 
 [task_local]
 0 10,14,20 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
@@ -13,6 +13,7 @@ const AUTH_REFRESH_TOKEN_KEY = "cornex.auth.refreshToken";
 const AUTH_TICKET_KEY = "cornex.auth.ticket";
 const AUTH_TOKEN_TYPE_KEY = "cornex.auth.tokenType";
 const CRYPTOJS_CACHE_KEY = "cornex.cryptojs";
+let PREF_LOG_SILENT = false;
 
 (async () => {
   try {
@@ -20,17 +21,24 @@ const CRYPTOJS_CACHE_KEY = "cornex.cryptojs";
     await getAuthorization();
     console.log("✅ 登录/鉴权完成，开始读取评价 BoxJs 配置...");
 
-    const fixedFields = {
-      jobCode: readStr("smartCanteen.jobCode", "").trim(),
-      userInfoId: readStr("smartCanteen.userInfoId", "").trim(),
-      userCodeOrigin: readStr("smartCanteen.userCodeOrigin", "").trim(),
-      companyName: readStr("smartCanteen.companyName", "").trim(),
-      companyCode: readStr("smartCanteen.companyCode", "").trim(),
-      loginUid: readStr("smartCanteen.loginUid", "").trim(),
-      userNameOrigin: readStr("smartCanteen.userNameOrigin", "").trim(),
-      remark: readStr("smartCanteen.remark", "").trim(),
-      score: parseInt(readStr("smartCanteen.score", "").trim(), 10)
-    };
+    const prevSilent = PREF_LOG_SILENT;
+    PREF_LOG_SILENT = true;
+    let fixedFields;
+    try {
+      fixedFields = {
+        jobCode: readStr("smartCanteen.jobCode", "").trim(),
+        userInfoId: readStr("smartCanteen.userInfoId", "").trim(),
+        userCodeOrigin: readStr("smartCanteen.userCodeOrigin", "").trim(),
+        companyName: readStr("smartCanteen.companyName", "").trim(),
+        companyCode: readStr("smartCanteen.companyCode", "").trim(),
+        loginUid: readStr("smartCanteen.loginUid", "").trim(),
+        userNameOrigin: readStr("smartCanteen.userNameOrigin", "").trim(),
+        remark: readStr("smartCanteen.remark", "").trim(),
+        score: parseInt(readStr("smartCanteen.score", "").trim(), 10)
+      };
+    } finally {
+      PREF_LOG_SILENT = prevSilent;
+    }
     console.log("📦 BoxJs 配置:\n" + JSON.stringify(fixedFields, null, 2));
 
     const missing = Object.entries(fixedFields).filter(([k, v]) => !v).map(([k]) => k);
@@ -129,26 +137,26 @@ async function run(fixedFields) {
   }
 
   console.log(
-    "📊 本次评价汇总:\n" +
-      JSON.stringify(
-        {
-          total: tradeIds.length,
-          success,
-          fail,
-          totalScore,
-          successList,
-          failList
-        },
-        null,
-        2
-      )
+    "📊 本次评价汇总：\n" +
+      `评价总数：${tradeIds.length}\n` +
+      `成功数量：${success}\n` +
+      `失败数量：${fail}\n` +
+      `积分总数：${totalScore}`
   );
+  const detailText = successList.length
+    ? successList
+        .map(x => {
+          const mealTime = (x && x.info && x.info.meal_time) || "";
+          const total = (x && x.scoreInfo && typeof x.scoreInfo.total !== "undefined") ? x.scoreInfo.total : "";
+          return `消费单号：${x.tradeId}\n消费时间：${mealTime}\n评价分数：${total}`;
+        })
+        .join("\n---\n")
+    : "无";
+  console.log("🧾 本次评价明细:\n" + detailText);
 
-  let msg = `成功:${success}，失败:${fail}，积分:${totalScore}`;
-  if (failList.length > 0) {
-    msg += `\n---\n异常详情:\n` + failList.map(f => `ID:${f.tradeId}, 错误:${f.error}`).join("\n");
-  }
-  $notify("智慧食堂评价", "", msg);
+  const subtitle = `评价总分：${totalScore}`;
+  const body = `成功：${success}   失败：${fail}`;
+  $notify("智慧食堂评价", subtitle, body);
 }
 
 async function getPendingComments() {
@@ -327,7 +335,6 @@ async function fetchWithAuth(options) {
   opts.headers = { ...(opts.headers || {}) };
   const auth = await getAuthorization();
   opts.headers.Authorization = auth;
-  console.log("Authorization：" + String(auth || ""));
   const res1 = await $task.fetch(opts);
   const statusCode1 = res1?.statusCode || 0;
   const bodyText1 = res1?.body || "";
@@ -338,7 +345,6 @@ async function fetchWithAuth(options) {
   clearAuthorization();
   const auth2 = await getAuthorization({ forceRefresh: true });
   opts.headers.Authorization = auth2;
-  console.log("Authorization：" + String(auth2 || ""));
   const res2 = await $task.fetch(opts);
   return { statusCode: res2?.statusCode || 0, bodyText: res2?.body || "" };
 }
@@ -709,7 +715,7 @@ function readStr(key, defVal) {
       preview: previewPrefValue(k, finalStr)
     }
   };
-  console.log("🔍 BoxJs 取值详情:\n" + JSON.stringify(info, null, 2));
+  if (!PREF_LOG_SILENT) console.log("🔍 BoxJs 取值详情:\n" + JSON.stringify(info, null, 2));
   return finalStr;
 }
 
@@ -730,7 +736,7 @@ function readRequired(key) {
     },
     required: true
   };
-  console.log("🔍 BoxJs 必填取值详情:\n" + JSON.stringify(info, null, 2));
+  if (!PREF_LOG_SILENT) console.log("🔍 BoxJs 必填取值详情:\n" + JSON.stringify(info, null, 2));
   if (!rawStr.trim()) throw new Error("缺失配置: " + k);
   return rawStr;
 }
