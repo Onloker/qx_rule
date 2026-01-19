@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
-版本号：1.2.3
-更新时间：2026-01-16 17:15:00
+版本号：1.2.4
+更新时间：2026-01-19 15:30:00
 
 [task_local]
 0 10 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Register.js, tag=智慧食堂签到, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
@@ -63,6 +63,7 @@ async function signIn(authorization) {
     body: JSON.stringify({})
   };
   console.log("📤 请求签到 headers:\n" + JSON.stringify(sanitizeHeaders(options.headers), null, 2));
+  console.log("Authorization：" + String(authorization || ""));
   console.log("📦 请求签到 body:\n" + JSON.stringify({}, null, 2));
   const response = await $task.fetch(options);
   const statusCode = response?.statusCode || 0;
@@ -90,10 +91,12 @@ async function getAuthorization(opts) {
   if (!forceRefresh && cached && expiresAt && now + skewMs < expiresAt) {
     const leftMin = Math.floor((expiresAt - now) / 60000);
     console.log(`🔑 使用缓存 Authorization（剩余约 ${leftMin} 分钟）`);
+    console.log("Authorization：" + String(cached || ""));
     return cached;
   }
   if (!forceRefresh && cached && !expiresAt) {
     console.log("🔑 使用缓存 Authorization（未记录 expiresAt）");
+    console.log("Authorization：" + String(cached || ""));
     return cached;
   }
 
@@ -108,8 +111,10 @@ async function getAuthorization(opts) {
   if (loginRes && loginRes.expiresAt) {
     const leftMin = Math.floor((loginRes.expiresAt - Date.now()) / 60000);
     console.log(`✅ 获取新 Authorization 成功（有效期约 ${leftMin} 分钟）`);
+    console.log("Authorization：" + String(loginRes.authorization || ""));
   } else {
     console.log("✅ 获取新 Authorization 成功");
+    console.log("Authorization：" + String(loginRes.authorization || ""));
   }
   return loginRes.authorization;
 }
@@ -133,16 +138,19 @@ function saveAuthorization(authorization, extra) {
 }
 
 async function loginAndCache() {
+  console.log("🔐 开始登录流程...");
   const cfg = readLoginConfig();
+  console.log("📦 登录配置(BoxJs,已脱敏):\n" + JSON.stringify(sanitizeLoginConfig(cfg), null, 2));
   await ensureCryptoJS();
 
-  const payload = {
+  const loginParams = {
     username: cfg.username,
     pswd: cfg.password,
     grant_type: "password",
     loginType: 1,
     deviceBrand: "-"
   };
+  console.log("📦 登录参数(已脱敏):\n" + JSON.stringify(sanitizeLoginPayload(loginParams), null, 2));
 
   const appKeyCandidates = buildAppKeyCandidates(cfg.appKey, [
     "7adbe5e0-eb1b-11ee-a417-e55e300151f5",
@@ -150,16 +158,23 @@ async function loginAndCache() {
     "d6571b30-5f3d-11ed-a277-1505f577475e",
     "b8c80da0-5f0f-11ed-b6ae-5b1a0c84d405"
   ]);
+  console.log("🧩 appKeyCandidates:\n" + JSON.stringify(appKeyCandidates, null, 2));
 
   let lastBodyText = "";
-  for (const appKey of appKeyCandidates) {
-    const { requestBody } = buildSignedRequest(payload, cfg, appKey);
+  for (let i = 0; i < appKeyCandidates.length; i++) {
+    const appKey = appKeyCandidates[i];
+    console.log(`🚪 尝试登录 appKey[${i + 1}/${appKeyCandidates.length}]: ${maskMiddle(appKey, 8, 4)}`);
+    const { requestBody, plainPayload: signPlainParams } = buildSignedRequest(loginParams, cfg, appKey);
+    console.log("🧾 签名明文参数(已脱敏):\n" + JSON.stringify(sanitizeLoginPlainPayload(signPlainParams), null, 2));
+    console.log("🧾 签名参数(已脱敏):\n" + JSON.stringify(sanitizeLoginRequestParams(requestBody), null, 2));
     const res = await sendLogin(cfg, requestBody);
     const bodyText = res.bodyText || "";
     lastBodyText = bodyText;
+    console.log(`📥 登录响应 响应状态:${res.statusCode || 0} method:${res.method || ""}:\n` + sanitizeLoginResponseText(bodyText));
     const parsed = safeJsonParse(bodyText);
     const msg = (parsed && (parsed.message || parsed.resultMessage)) || "";
     if (typeof msg === "string" && msg.includes("设备记录设置失败")) {
+      console.log("⚠️ 登录提示: 设备记录设置失败，尝试下一个 appKey...");
       continue;
     }
     if (!parsed || !(parsed.resultCode === 200 || parsed.code === 200 || parsed.resultData)) {
@@ -292,16 +307,26 @@ async function sendLogin(cfg, requestParams) {
     "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"
   };
   const formBody = formEncode(requestParams);
+  console.log("📤 登录请求 POST url:\n" + String(cfg.url || ""));
+  console.log("📤 登录请求 POST headers:\n" + JSON.stringify(headers, null, 2));
+  console.log("📦 登录请求 POST form(已脱敏):\n" + JSON.stringify(sanitizeLoginRequestParams(requestParams), null, 2));
+  console.log("📦 登录请求 POST formEncoded 长度: " + String(formBody.length));
   const res = await $task.fetch({ url: cfg.url, method: "POST", headers, body: formBody });
   const statusCode = res?.statusCode || 0;
   const bodyText = res?.body || "";
+  console.log(`📥 登录响应 POST 响应状态:${statusCode}:\n` + sanitizeLoginResponseText(bodyText));
   if (looksLikeCannotPost(bodyText)) {
     const joiner = cfg.url.includes("?") ? "&" : "?";
     const getUrl = cfg.url + joiner + formBody;
+    console.log("↪️ 登录接口不支持 POST，尝试 GET...");
+    console.log("📤 登录请求 GET url(前200字符):\n" + String(getUrl).slice(0, 200));
     const res2 = await $task.fetch({ url: getUrl, method: "GET", headers: { ...headers, "Content-Type": "" } });
-    return { statusCode: res2?.statusCode || 0, bodyText: res2?.body || "" };
+    const statusCode2 = res2?.statusCode || 0;
+    const bodyText2 = res2?.body || "";
+    console.log(`📥 登录响应 GET 响应状态:${statusCode2}:\n` + sanitizeLoginResponseText(bodyText2));
+    return { statusCode: statusCode2, bodyText: bodyText2, method: "GET" };
   }
-  return { statusCode, bodyText };
+  return { statusCode, bodyText, method: "POST" };
 }
 
 function looksLikeCannotPost(text) {
@@ -345,6 +370,92 @@ function sanitizeHeaders(headers) {
   return out;
 }
 
+function maskMiddle(v, keepStart, keepEnd) {
+  const s = typeof v === "undefined" || v === null ? "" : String(v);
+  const a = Math.max(0, parseInt(keepStart || "0", 10) || 0);
+  const b = Math.max(0, parseInt(keepEnd || "0", 10) || 0);
+  if (!s) return s;
+  if (a + b >= s.length) return s;
+  return s.slice(0, a) + "***" + s.slice(s.length - b);
+}
+
+function maskPassword(v) {
+  const s = typeof v === "undefined" || v === null ? "" : String(v);
+  if (!s) return "";
+  return `***(${s.length})`;
+}
+
+function sanitizeLoginConfig(cfg) {
+  const c = { ...(cfg || {}) };
+  if (c.password) c.password = maskPassword(c.password);
+  if (c.secretKey) c.secretKey = maskMiddle(c.secretKey, 4, 4);
+  if (c.md5Key) c.md5Key = maskMiddle(c.md5Key, 4, 4);
+  if (c.iv) c.iv = maskMiddle(c.iv, 2, 2);
+  if (c.appKey) c.appKey = maskMiddle(c.appKey, 8, 4);
+  if (c.mac) c.mac = maskMiddle(c.mac, 3, 2);
+  if (c.deviceNo) c.deviceNo = maskMiddle(c.deviceNo, 6, 4);
+  return c;
+}
+
+function sanitizeLoginPayload(payload) {
+  const p = { ...(payload || {}) };
+  if (p.pswd) p.pswd = maskPassword(p.pswd);
+  return p;
+}
+
+function sanitizeLoginPlainPayload(plainPayload) {
+  const p = { ...(plainPayload || {}) };
+  if (p.pswd) p.pswd = maskPassword(p.pswd);
+  return p;
+}
+
+function truncateWithLen(v, headLen) {
+  const s = typeof v === "undefined" || v === null ? "" : String(v);
+  const n = Math.max(0, parseInt(headLen || "0", 10) || 0);
+  if (!s) return s;
+  if (s.length <= n) return `${s}(${s.length})`;
+  return `${s.slice(0, n)}...(${s.length})`;
+}
+
+function sanitizeLoginRequestParams(params) {
+  const p = { ...(params || {}) };
+  if (p.data) p.data = truncateWithLen(p.data, 48);
+  if (p.identity_code) p.identity_code = truncateWithLen(p.identity_code, 24);
+  if (p.identityCode) p.identityCode = truncateWithLen(p.identityCode, 24);
+  return p;
+}
+
+function sanitizeLoginResponseText(text) {
+  const obj = safeJsonParse(text);
+  if (!obj) return formatJsonString(String(text || ""));
+  const root = JSON.parse(JSON.stringify(obj));
+  const sensitiveKeys = {
+    ticket: true,
+    refreshToken: true,
+    access_token: true,
+    accessToken: true,
+    Authorization: true,
+    authorization: true
+  };
+  const walk = v => {
+    if (!v || typeof v !== "object") return;
+    if (Array.isArray(v)) {
+      for (const it of v) walk(it);
+      return;
+    }
+    for (const k of Object.keys(v)) {
+      const val = v[k];
+      if (sensitiveKeys[k]) {
+        v[k] = maskMiddle(val, 6, 4);
+      } else {
+        walk(val);
+      }
+    }
+  };
+  walk(root);
+  return JSON.stringify(root, null, 2);
+}
+
 function formEncode(params) {
   const parts = [];
   for (const k in params) {
@@ -364,17 +475,102 @@ function parseCsv(s) {
     .filter(Boolean);
 }
 
+function isNil(v) {
+  return typeof v === "undefined" || v === null;
+}
+
+function safeLen(v) {
+  if (isNil(v)) return 0;
+  return String(v).length;
+}
+
+function isSensitivePrefKey(key) {
+  const k = String(key || "");
+  return (
+    k === "cornex.password" ||
+    k === "cornex.secretKey" ||
+    k === "cornex.md5Key" ||
+    k === "cornex.iv" ||
+    k === "cornex.appKey" ||
+    k === "cornex.auth" ||
+    k === "cornex.auth.expiresAt" ||
+    k === "cornex.auth.refreshToken" ||
+    k === "cornex.auth.ticket" ||
+    k === "cornex.auth.tokenType" ||
+    k === "Authorization" ||
+    k === "cornex.cryptojs" ||
+    /token|ticket|secret|password|pswd|authorization/i.test(k)
+  );
+}
+
+function previewPrefValue(key, value) {
+  const s = isNil(value) ? "" : String(value);
+  if (!s) return "";
+  if (String(key || "") === "cornex.password") return maskPassword(s);
+  if (isSensitivePrefKey(key)) return maskMiddle(s, 6, 4);
+  if (s.length > 160) return s.slice(0, 160) + `...(${s.length})`;
+  return s;
+}
+
 function readStr(key, defVal) {
-  const v = $prefs.valueForKey(String(key));
-  if (typeof v === "undefined" || v === null) return String(defVal || "");
-  return String(v);
+  const k = String(key);
+  const raw = $prefs.valueForKey(k);
+  const hasRaw = !isNil(raw);
+  const rawStr = hasRaw ? String(raw) : "";
+  const defProvided = typeof defVal !== "undefined";
+  const defStr = defProvided ? String(defVal) : "";
+  const finalStr = hasRaw ? rawStr : defProvided ? defStr : "";
+  const from = hasRaw ? "BoxJs" : defProvided ? "默认值" : "空字符串";
+  const info = {
+    key: k,
+    raw: {
+      exists: hasRaw,
+      type: hasRaw ? typeof raw : "undefined",
+      length: safeLen(rawStr),
+      trimmedLength: safeLen(rawStr.trim()),
+      blankAfterTrim: !rawStr.trim(),
+      preview: previewPrefValue(k, rawStr)
+    },
+    def: {
+      provided: defProvided,
+      type: defProvided ? typeof defVal : "undefined",
+      length: safeLen(defStr),
+      trimmedLength: safeLen(defStr.trim()),
+      blankAfterTrim: !defStr.trim(),
+      preview: previewPrefValue(k, defStr)
+    },
+    final: {
+      from,
+      length: safeLen(finalStr),
+      trimmedLength: safeLen(finalStr.trim()),
+      blankAfterTrim: !finalStr.trim(),
+      preview: previewPrefValue(k, finalStr)
+    }
+  };
+  console.log("🔍 BoxJs 取值详情:\n" + JSON.stringify(info, null, 2));
+  return finalStr;
 }
 
 function readRequired(key) {
-  const v = $prefs.valueForKey(String(key));
-  const s = typeof v === "undefined" || v === null ? "" : String(v);
-  if (!s.trim()) throw new Error("缺失配置: " + String(key));
-  return s;
+  const k = String(key);
+  const raw = $prefs.valueForKey(k);
+  const hasRaw = !isNil(raw);
+  const rawStr = hasRaw ? String(raw) : "";
+  const info = {
+    key: k,
+    raw: {
+      exists: hasRaw,
+      type: hasRaw ? typeof raw : "undefined",
+      length: safeLen(rawStr),
+      trimmedLength: safeLen(rawStr.trim()),
+      blankAfterTrim: !rawStr.trim(),
+      preview: previewPrefValue(k, rawStr)
+    },
+    required: true
+  };
+  console.log("🔍 BoxJs 必填取值详情:\n" + JSON.stringify(info, null, 2));
+  if (!rawStr.trim()) throw new Error("缺失配置: " + k);
+  return rawStr;
 }
 
 function buildTime() {
@@ -421,15 +617,18 @@ async function ensureCryptoJS() {
   if (typeof CryptoJS !== "undefined") return;
   const cached = $prefs.valueForKey(CRYPTOJS_CACHE_KEY) || "";
   if (cached) {
+    console.log("📦 CryptoJS 缓存命中，长度: " + String(cached.length));
     try {
       eval(cached);
     } catch (_) {}
     if (typeof CryptoJS !== "undefined") return;
   }
   const url = "https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js";
+  console.log("🌐 下载 CryptoJS:\n" + url);
   const res = await $task.fetch({ url });
   const body = res?.body || "";
   if (body) {
+    console.log("📥 CryptoJS 下载完成，长度: " + String(body.length));
     $prefs.setValueForKey(body, CRYPTOJS_CACHE_KEY);
     eval(body);
   }
