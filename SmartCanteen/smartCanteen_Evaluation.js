@@ -1,7 +1,7 @@
 /******************************************
 作者：Onloker
 版本号：1.1.7
-更新时间：2026-01-19 16:30:00
+更新时间：2026-01-20 10:00:00
 
 [task_local]
 0 10,14,20 * * * https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/SmartCanteen/smartCanteen_Evaluation.js, tag=智慧食堂评价, img-url=https://raw.githubusercontent.com/Onloker/qx_rule/refs/heads/main/icon/cornex.png, enabled=true
@@ -715,7 +715,6 @@ function readStr(key, defVal) {
       preview: previewPrefValue(k, finalStr)
     }
   };
-  if (!PREF_LOG_SILENT) console.log("🔍 BoxJs 取值详情:\n" + JSON.stringify(info, null, 2));
   return finalStr;
 }
 
@@ -736,7 +735,6 @@ function readRequired(key) {
     },
     required: true
   };
-  if (!PREF_LOG_SILENT) console.log("🔍 BoxJs 必填取值详情:\n" + JSON.stringify(info, null, 2));
   if (!rawStr.trim()) throw new Error("缺失配置: " + k);
   return rawStr;
 }
