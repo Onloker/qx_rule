@@ -547,7 +547,6 @@ function readStr(key, defVal) {
       preview: previewPrefValue(k, finalStr)
     }
   };
-  console.log("🔍 BoxJs 取值详情:\n" + JSON.stringify(info, null, 2));
   return finalStr;
 }
 
@@ -568,7 +567,6 @@ function readRequired(key) {
     },
     required: true
   };
-  console.log("🔍 BoxJs 必填取值详情:\n" + JSON.stringify(info, null, 2));
   if (!rawStr.trim()) throw new Error("缺失配置: " + k);
   return rawStr;
 }

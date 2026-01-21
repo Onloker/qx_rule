@@ -155,7 +155,7 @@ async function run(fixedFields) {
   console.log("🧾 本次评价明细:\n" + detailText);
 
   const subtitle = `评价总分：${totalScore}`;
-  const body = `成功：${success}   失败：${fail}`;
+  const body = `成功:${success}   失败:${fail}`;
   $notify("智慧食堂评价", subtitle, body);
 }
 
