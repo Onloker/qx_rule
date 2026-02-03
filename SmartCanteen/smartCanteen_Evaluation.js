@@ -68,71 +68,91 @@ async function run(fixedFields) {
   let failList = [];
   let successList = [];
 
-  for (const tradeId of tradeIds) {
+  for (let i = 0; i < tradeIds.length; i++) {
+    const tradeId = tradeIds[i];
     console.log(`\n----------------------------`);
     console.log(`➡️ 开始处理 tradeId: ${tradeId}`);
-    try {
-      const info = await getCommentInfo(tradeId);
-      console.log(`✅ 获取详情成功 tradeId:${tradeId}:\n` + JSON.stringify(info, null, 2));
+    let done = false;
+    let lastErr = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const info = await getCommentInfo(tradeId);
+        console.log(`✅ 获取详情成功 tradeId:${tradeId}:\n` + JSON.stringify(info, null, 2));
 
-      const submitBody = {
-        jobCode: fixedFields.jobCode,
-        userInfoId: fixedFields.userInfoId,
-        userCodeOrigin: fixedFields.userCodeOrigin,
-        companyName: fixedFields.companyName,
-        companyCode: fixedFields.companyCode,
-        loginUid: fixedFields.loginUid,
-        userNameOrigin: fixedFields.userNameOrigin,
-        remark: fixedFields.remark,
-        trade_id: tradeId,
-        meal_time: info.meal_time,
-        canteen_name: info.canteenName,
-        canteen_code: info.canteenCode,
-        comment: [
-          {
-            stall_name: info.firstStallName,
-            food_name: info.firstFoodName,
-            score: fixedFields.score
-          }
-        ],
-        attachment: [],
-        groupCodeOrigin: []
-      };
+        const submitBody = {
+          jobCode: fixedFields.jobCode,
+          userInfoId: fixedFields.userInfoId,
+          userCodeOrigin: fixedFields.userCodeOrigin,
+          companyName: fixedFields.companyName,
+          companyCode: fixedFields.companyCode,
+          loginUid: fixedFields.loginUid,
+          userNameOrigin: fixedFields.userNameOrigin,
+          remark: fixedFields.remark,
+          trade_id: tradeId,
+          meal_time: info.meal_time,
+          canteen_name: info.canteenName,
+          canteen_code: info.canteenCode,
+          comment: [
+            {
+              stall_name: info.firstStallName,
+              food_name: info.firstFoodName,
+              score: fixedFields.score
+            }
+          ],
+          attachment: [],
+          groupCodeOrigin: []
+        };
 
-      const submitHeaders = {
-        Accept: "application/json, text/plain, */*",
-        "Content-Type": "application/json;charset=UTF-8",
-        Origin: "https://app.dms.cn-np.com",
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
-        Referer: "https://app.dms.cn-np.com/"
-      };
+        const submitHeaders = {
+          Accept: "application/json, text/plain, */*",
+          "Content-Type": "application/json;charset=UTF-8",
+          Origin: "https://app.dms.cn-np.com",
+          "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 HXMall CNBusiness/3.28.0; SCO_OREO",
+          Referer: "https://app.dms.cn-np.com/"
+        };
 
-      console.log(`📤 提交评价 headers:\n` + JSON.stringify(sanitizeHeaders(submitHeaders), null, 2));
-      console.log(`📦 提交评价 body:\n` + JSON.stringify(submitBody, null, 2));
+        console.log(`📤 提交评价 headers:\n` + JSON.stringify(sanitizeHeaders(submitHeaders), null, 2));
+        console.log(`📦 提交评价 body:\n` + JSON.stringify(submitBody, null, 2));
 
-      const submitRes = await httpPostWithAuth({
-        url: "https://smart-area-api.cn-np.com/canteen/comment/submit",
-        headers: submitHeaders,
-        body: JSON.stringify(submitBody)
-      });
-      console.log(`📥 提交评价返回:\n` + formatJsonString(submitRes));
+        const submitRes = await httpPostWithAuth({
+          url: "https://smart-area-api.cn-np.com/canteen/comment/submit",
+          headers: submitHeaders,
+          body: JSON.stringify(submitBody)
+        });
+        console.log(`📥 提交评价返回:\n` + formatJsonString(submitRes));
 
-      const submitJson = JSON.parse(submitRes);
-      if (submitJson.code !== 200) throw new Error(submitJson.msg || "提交失败");
+        const submitJson = JSON.parse(submitRes);
+        if (submitJson.code !== 200) throw new Error(submitJson.msg || "提交失败");
 
-      console.log(`✅ 提交评价成功 tradeId:${tradeId}`);
+        console.log(`✅ 提交评价成功 tradeId:${tradeId}`);
 
-      const scoreInfo = await getScoreAfterComment(tradeId);
-      console.log(`🎉 获取积分成功 tradeId:${tradeId}:\n` + JSON.stringify(scoreInfo, null, 2));
+        const scoreInfo = await getScoreAfterComment(tradeId);
+        console.log(`🎉 获取积分成功 tradeId:${tradeId}:\n` + JSON.stringify(scoreInfo, null, 2));
 
-      success++;
-      totalScore += scoreInfo.total;
-      successList.push({ tradeId, info, scoreInfo, commentScore: fixedFields.score });
-    } catch (e) {
-      console.log(`❌ tradeId:${tradeId} 异常:\n` + String(e));
+        success++;
+        totalScore += scoreInfo.total;
+        successList.push({ tradeId, info, scoreInfo, commentScore: fixedFields.score });
+        done = true;
+        break;
+      } catch (e) {
+        lastErr = e;
+        console.log(`❌ tradeId:${tradeId} 第${attempt}次异常:\n` + String(e));
+        if (attempt < 2) {
+          const retryDelay = randBetween(1000, 3000);
+          console.log(`⏳ ${retryDelay}ms 后重试 tradeId:${tradeId}`);
+          await sleep(retryDelay);
+        }
+      }
+    }
+    if (!done) {
       fail++;
-      failList.push({ tradeId, error: String(e) });
-      $notify("智慧食堂评价", "❗异常", `ID:${tradeId}, 错误:${e}`);
+      failList.push({ tradeId, error: String(lastErr) });
+      $notify("智慧食堂评价", "❗异常", `ID:${tradeId}, 错误:${lastErr}`);
+    }
+    if (i < tradeIds.length - 1) {
+      const gap = randBetween(1000, 3000);
+      console.log(`⏳ 间隔 ${gap}ms 后处理下一条`);
+      await sleep(gap);
     }
   }
 
@@ -247,6 +267,18 @@ function maskPassword(v) {
   const s = typeof v === "undefined" || v === null ? "" : String(v);
   if (!s) return "";
   return `***(${s.length})`;
+}
+
+function randBetween(min, max) {
+  const a = Math.max(0, parseInt(min || "0", 10) || 0);
+  const b = Math.max(0, parseInt(max || "0", 10) || 0);
+  if (a >= b) return a;
+  return Math.floor(Math.random() * (b - a + 1)) + a;
+}
+
+function sleep(ms) {
+  const n = Math.max(0, parseInt(ms || "0", 10) || 0);
+  return new Promise(resolve => setTimeout(resolve, n));
 }
 
 function sanitizeLoginConfig(cfg) {
